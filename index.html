@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On-Board Training筆記</title>
+  <style>
+    :root {
+      --bg-primary: #f6f8fa;
+      --bg-surface: #ffffff;
+      --bg-sidebar: #0f172a;
+      --text-sidebar: #e2e8f0;
+      --text-sidebar-muted: #94a3b8;
+      --sidebar-hover: #1e293b;
+      --sidebar-active: #3b82f6;
+      --text-primary: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --primary-color: #2563eb;
+      --primary-light: #eff6ff;
+      --code-bg: #f1f5f9;
+      --table-border: #cbd5e1;
+      --sidebar-width: 340px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft JhengHei", Roboto, sans-serif;
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      color: var(--text-sidebar);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1e293b;
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 18px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .sidebar-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .search-box {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #ffffff;
+      font-size: 0.88rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--sidebar-active);
+      background: #0f172a;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+    }
+
+    .search-input::placeholder {
+      color: #64748b;
+    }
+
+    .file-list {
+      list-style: none;
+      overflow-y: auto;
+      flex: 1;
+      padding: 10px 8px;
+    }
+
+    .file-item {
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .file-item:hover {
+      background: var(--sidebar-hover);
+    }
+
+    .file-item.active {
+      background: var(--sidebar-active);
+      color: #ffffff;
+    }
+
+    .file-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      line-height: 1.45;
+      color: #f1f5f9;
+      word-break: break-word;
+    }
+
+    .file-item.active .file-title {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Main Area */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-surface);
+    }
+
+    .content-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 60px;
+      scroll-behavior: smooth;
+    }
+
+    .doc-header {
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid var(--border-color);
+      max-width: 980px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .doc-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: var(--primary-color);
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #ffffff;
+    }
+
+    /* Markdown Rendered Typography */
+    .markdown-body {
+      line-height: 1.75;
+      font-size: 15px;
+      color: var(--text-primary);
+      max-width: 980px;
+      margin-left: auto;
+      margin-right: auto;
+      word-break: break-word;
+    }
+
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4,
+    .markdown-body h5,
+    .markdown-body h6 {
+      margin-top: 32px;
+      margin-bottom: 14px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #0f172a;
+      scroll-margin-top: 24px;
+    }
+
+    .markdown-body h1 {
+      font-size: 1.85rem;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .markdown-body h2 {
+      font-size: 1.45rem;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .markdown-body h3 {
+      font-size: 1.2rem;
+    }
+
+    .markdown-body h4 {
+      font-size: 1.05rem;
+    }
+
+    .markdown-body p {
+      margin-bottom: 16px;
+    }
+
+    .markdown-body strong {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .markdown-body em {
+      font-style: italic;
+    }
+
+    .markdown-body ul,
+    .markdown-body ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    .markdown-body li {
+      margin-bottom: 6px;
+    }
+
+    .markdown-body li > ul,
+    .markdown-body li > ol {
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    .markdown-body blockquote {
+      margin: 18px 0;
+      padding: 12px 20px;
+      color: var(--text-secondary);
+      background-color: #f8fafc;
+      border-left: 4px solid var(--primary-color);
+      border-radius: 0 6px 6px 0;
+    }
+
+    .markdown-body hr {
+      border: 0;
+      height: 1px;
+      background: var(--border-color);
+      margin: 32px 0;
+    }
+
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 22px 0;
+      font-size: 0.92rem;
+      display: block;
+      overflow-x: auto;
+    }
+
+    .markdown-body th,
+    .markdown-body td {
+      border: 1px solid var(--table-border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    .markdown-body th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .markdown-body tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    .markdown-body code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.88em;
+      background-color: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+
+    .markdown-body pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 18px 0;
+      line-height: 1.5;
+    }
+
+    .markdown-body pre code {
+      background-color: transparent;
+      padding: 0;
+      border: none;
+      color: #f8fafc;
+      font-size: 0.88rem;
+    }
+
+    .markdown-body a {
+      color: var(--primary-color);
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .markdown-body a:hover {
+      text-decoration: underline;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        max-height: 260px;
+      }
+      .content-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">On-Board Training筆記</div>
+    </div>
+    <div class="search-box">
+      <input type="text" id="search-input" class="search-input" placeholder="搜尋檔案名稱...">
+    </div>
+    <ul id="file-list" class="file-list"></ul>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <main class="content-container" id="content-scroll">
+      <div class="doc-header">
+        <h1 id="view-title">請選擇文件</h1>
+        <div class="doc-actions">
+          <a id="btn-open-raw" href="#" target="_blank" class="btn">在新分頁開啟 .md</a>
+          <a id="btn-download-raw" href="#" download class="btn btn-primary">下載原始 .md</a>
+        </div>
+      </div>
+      <article id="markdown-viewer" class="markdown-body">
+        <div class="empty-state">載入中...</div>
+      </article>
+    </main>
+  </div>
+
+  <!-- Raw Docs Data Injection -->
+  <script id="docs-data" type="application/json">
+[{"id": "doc-1", "filename": "1. LIC Overview on board training by Jessie.md", "title": "1. LIC Overview on board training by Jessie", "content": "20260908\n>https://docs.google.com/presentation/d/1o2dxEgRPp4X5FMap4yVxDw2vPjB5aZk4eEefu7jKLCk/edit?usp=sharing\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n本次培訓為 **LIC Overview 新人培訓** 的第一堂基礎概覽課程，旨在協助新進人員建立對公司整體商業生態與產品架構的全局視野。核心宗旨在于明確 LIC / NF 作為 **B2B 體育產品與技術供應商（Provider）** 的定位，說明如何透過提供 Sportsbook、第三方遊戲及 API 整合服務支援 Operator 客戶。培訓強調公司採用 **Profit Share（輸贏拆帳）** 的獲利模式，並以維護前 20% 大客戶創造 80% 營收為核心營運策略。學員的最大收穫是釐清了從客戶需求詢問、跨部門評估、技術整合至上線維運的完整生命週期，以及 PO 在串聯 OneLab（公版）、SX Team、OP、CSD 等多方團隊中的核心職責。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### 主題一：B2B 體育產業角色與商業生態\n* **核心概念 / 理論定義**：LIC / NF 定位為 B2B 體育產品與技術供應商（Provider），專注於提供產品（Product）與技術（Technology）服務。客戶端為 Operator / Licensing，負責建立自有品牌並直接面對 C 端玩家（B2C）。\n* **關鍵步驟、模型或操作方法**：\n  1. **產品與技術交付**：NF 提供體育平台、遊戲與 API 數據。\n  2. **金流與合規營運**：客戶需自行處理玩家入金與出金（In/Out 路徑）等金流系統，並向監管機構（Regulator）申請 GLI 等認證與營運牌照（分為白牌與灰牌，NF 亦有支援灰牌業務）。\n  3. **玩家合規（KYC）**：客戶需執行 Know Your Customer（KYC），於玩家出金時強制審查真實姓名與銀行帳戶等基本資料。\n* **講者強調的重要觀念或常見誤區**：\n  * **金流完全不經手**：NF 完全不提供金流處理服務，金流風險與運營由 Operator 客戶全權承擔。\n  * **合規證照雙向配合**：雖然牌照由客戶平台送審，但 NF 端必須提供產品本身的 GLI 認證協助客戶完成當地政府審查。\n\n#### 主題二：四大客戶型態與 Solution 交付模式\n* **核心概念 / 理論定義**：根據客戶的技術能力與市場需求，將客戶劃分為四大類型：\n  1. **完整 Sportsbook 需求型**：採用完整包套的體育平台解決方案。\n  2. **多體育平台整合型**：常見於亞洲市場，客戶除沙巴（SABA）外會同時接入 BTI、Pinnacle 等多個體育平台以吸引玩家。\n  3. **數據/API 接入型：客戶具備獨立前端開發能力，僅透過 API 獲取體育數據（常見於歐美市場或高技術力客戶）。\n  4. **iFrame / 第三方遊戲加購型**：前端畫面由 NF 全包（iFrame），或打包採購 Slot、Live Casino、Lottery 等第三方遊戲。\n* **關鍵步驟、模型或操作方法**：\n  * **一包式 API 整合策略**：針對第三方遊戲（Casino/Slot），NF 的核心賣點在於將 20–30 家廠商整合為單一 API 賣給客戶，使客戶僅需一次對接即可取得全量遊戲。\n  * **對接分工**：技術整合由 TM（Technical Integration）團隊主責，PO 團隊在前期爭取大客戶或評估特殊 API 需求時協同介入。\n* **講者強調的重要觀念或常見誤區**：\n  * **數據型客戶溝通成本最高**：看似僅提供 API，但因不同體育項目（如網球、棒球）參數與結算邏輯定義複雜，溝通與維護成本反而高於一般客戶。\n  * **客製化服務門檻**：內部以營收量級進行評估，原則上僅針對前 15% 以上的大客戶給予客製化討論空間，小客戶則採用標準套裝流程。\n\n#### 主題三：盈利模式與拆帳機制（Revenue Share）\n* **核心概念 / 理論定義**：NF 與客戶採用 Profit Share（PT / Revenue Share）模式，以玩家在平台上的淨輸贏金額進行比例拆帳。\n* **關鍵步驟、模型或操作方法**：\n  * **拆帳計算範例**：若客戶當月玩家淨輸額為 100 萬，在 93:7 的拆帳比例下，NF 可分得 7 萬元收益。\n  * **產品線拆帳差異**：Sportsbook 早期拆帳可達 10%–15%，現因市場削價競爭，大客戶最低壓至 5%；而虛擬體育（Virtual Sports）等產品拆帳較高（約 12%）。\n* **講者強調的重要觀念或常見誤區**：\n  * **二八法則（20/80 Rule）**：公司約 20% 的大客戶貢獻了 80% 的總營收，因此維護並服務好大客戶是團隊最重要的目標。\n  * 具體拆帳比例由 AM（Account Manager）與客戶簽署的商務合約為最終依據。\n\n#### 主題四：客戶生命週期與跨部門協作網絡\n* **核心概念 / 理論定義**：客戶生命週期涵蓋「需求接洽（Sales/AM）→ 產品與跨部門評估（PO/PD）→ 簽約（AM）→ 技術對接（TM/PO）→ UAT 驗證 → 上線（Go-Live）→ 日常維運與支援（CSD/OP/AM）→ 持續產品優化」。\n* **關鍵步驟、模型或操作方法**：\n  * **PO 核心價值**：負責將後端 API、數據源、前台與各營運服務溝通串接，提供客戶完整的 Solution。\n  * **上線通知 SOP**：涉及 API 整合之功能發布，預設須預留 2 週整合期給客戶；前台畫面調整則需提前通知 TM 與 CSD，最終發布時間由 TM 決定。\n  * **跨部門組織分工**：\n    * **NF 6樓**：AM（商務）、PO/UXUI（產品與規格）、PD（前後端與 API 開發）、TM（技術客服/整合）。\n    * **OneLab / 八樓（公版 / 「樓上」）**：提供核心賠率數據（Odds）、操盤後台與公版 View，NF 可分支（Branch）修改代碼但不安裝回公版主幹。\n    * **SX Team**：負責報表開發、核心 DB（注單、使用者資料）維護與賽事結算（Settlement）邏輯。\n    * **OP（營運操盤）**：負責開賽事、操盤控管、盤口與體育規則確認。\n    * **CSD**：提供 24 小時線上技術支援與問題通報。\n    * **R&D**：位於越南，負責競品分析與歐美等新市場調研。\n* **講者強調的重要觀念或常見誤區**：\n  * **敏感用語合規規範**：內部溝通（Slack、文件）嚴禁使用「越南」相關字眼，一律統一稱為「SX Team」以保障海外同仁安全。\n  * **公版 View 維護模式**：拉取公版 Branch 進行專案開發，變更不會合併（Merge）回公版主線。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n* **案例一：亞洲市場客戶多平台接入（OK 品牌案例）**\n  * **情境描述**：展示某同集團背景之客戶平台，同時接入沙巴體育（SABA Sportsbook）、BTI、Pinnacle 及 PG Sports 等多個體育供應商。\n  * **啟發與解法**：亞洲 Operator 為吸引玩家普遍不會僅使用單一體育平台，了解此生態有助於評估潛在客戶並定位沙巴體育在多平台組合中的價值。\n\n* **案例二：歐美市場 Data / API（ASD）對接需求**\n  * **情境描述**：歐美客戶或具備強大研發能力的客戶，選擇僅向 NF 採購體育數據 API，前端畫面完全自主開發。\n  * **啟發與解法**：雖然 API 數據量小且上線快，但因各體育項目（如網球、棒球）參數定義複雜，PO 與 TM 需要投入極高的溝通解讀成本。\n\n* **案例三：菲律賓市場特定體育（籃球）開盤需求**\n  * **情境描述**：菲律賓市場對籃球偏好極高，當地客戶要求 NF 增加籃球賽事開盤量及豐富的趣味玩法。\n  * **啟發與解法**：產品團隊需密切關注區域市場特徵，及時向 OP 團隊確認開盤能力與玩法支援，提升客戶在當地的市場競爭力。\n\n* **案例四：菲律賓博彩政策變更與全員 WFH 演練**\n  * **情境描述**：菲律賓政府取消境內博彩牌照，導致公司於當地的 Studio 與辦公室關閉，全體員工轉為遠距居家辦公（WFH ）。\n  * **啟發與解法**：凸顯海外市場合規與營運環境的動態風險，團隊需建立跨區彈性支援體系（如 CSD 24 小時遠距維護）。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動         | 適用情境或對象                         | 預期成效 / 注意事項                                                 |\n| :------------------ | :------------------------------ | :---------------------------------------------------------- |\n| **預留 2 週 API 整合時程** | 涉及 API 對接之新功能 / 產品上線時（PO、TM、客戶） | 給予客戶充分對接測試時間，確保系統穩定；前台微調亦須提前通告 TM/CSD。                      |\n| **實施客製化需求分級評估**     | 接獲客戶提出客製化需求時（AM、PO 團隊）          | 僅排名前 15% 以上大客戶開放客製化討論，精準控管研發成本並維護 80% 營收來源。                 |\n| **落實敏感字眼通訊規範**      | 每日跨部門溝通、Slack 與撰寫規格文件時（全體同仁）    | 嚴禁出現「越南」字眼，統一稱為「SX Team」，維護海外團隊合規與人身安全。                     |\n| **完成後續模組培訓清單**      | 新進 PO / 培訓學員（講師規劃之後續課程）         | 按順序完成 Sportsbook 前台、API/Single Wallet、UXUI、後台、主播營運及 APP 培訓。 |\n\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### 推薦資源\n* **內部延伸培訓課程與文件**：Sportsbook 前台規格、API 與 Single Wallet 整合文檔、後台系統說明、主播產品與營運介紹、APP 產品功能模組。\n\n#### Q&A 現場互動精選\n* **Q1：四大客戶類型對不同部門（如 PO 與大部門）的工作影響有何差異？**\n  * **講師解答**：各有差異。Sportsbook 包套整合較快（約 2–3 天）；但 Data/API 型因體育參數複雜，溝通成本高。一般由 TM 負責技術對接，若涉及 API 不適用評估或前期 AM 爭取大客戶時，PO 會協同參加商務與技術談判。\n* **Q2：使用公版（OneLab / 八樓）View 畫面時，我們是否有 Source Code 可供修改？**\n  * **講師解答**：我們有 Source Code 可供修改（拉自己的 Branch），但可修改幅度有限，且修改後的程式碼不會合併（Merge）回公版主線。\n* **Q3：PO 提供給 TM 的「整合文件」包含哪些內容？**\n  * **講師解答**：包含非技術的產品介紹文件與技術性的 API Spec。由 PO 整合後交付 TM，再由 TM 統一對外發布給客戶並安排整合時程。"}, {"id": "doc-2", "filename": "2. 前台 on board training by Trisha.md", "title": "2. 前台 on board training by Trisha", "content": "20260907\n>https://docs.google.com/presentation/d/1PlwWGUxEE2KMQsCGMd8-MasxvSXpL5d4/edit?usp=sharing&ouid=101109970901498170336&rtpof=true&sd=true\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n\n- **培訓核心宗旨與理念**：本次培訓旨在全面梳理 **Sportsbook 前台系統的核心架構**，涵蓋多種視覺版本（View）、客戶端整合模式（API 與 Seamless / Athena Site）以及開發與測試環境的部署邏輯。\n- **系統機制與進場方式**：詳細拆解了網址動態拼接的核心技術 **OneDomain 機制**（`RandomID + FunctionCode + OneDomain`），並說明 W Site、Deep Link 及後門等多元前台進入管道。\n- **實戰功能與營運最大收穫**：現場展示了前台主要頁面操作、四大投注模式（單腳、串關、系統串關、Bet Builder）、提前結算（Cashout）、12 種語系支援，以及第三方遊戲（如沙巴 Saba 維護的虛擬體育與 Casino）的責任劃分。\n- **團隊協作收穫**：學員能明確釐清各測試環境（SIT/UAT/PROD）的 DB 隔離政策，並掌握排查 Error Code 與權限申請的 SOP。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### **主題一：前台介面（View）版本分類與市場定位**\n- **核心概念 / 理論定義**：系統支援 5 種前台 View 介面，以滿足不同市場與玩家偏好：\n  1. **Compact (Mars / 輕量版)**：採 RWD 架構，桌機與手機共用程式碼以降低開發成本；分為資料簡潔的「新手版」與資訊豐富的「老手版」，主攻亞洲市場。\n  2. **Galaxy (銀河版)**：採 RWD 架構，提供卡片與清單模式，預設主色為 Tiffany 藍。\n  3. **Classic (Standard)**：非 RWD 的傳統經典介面，僅支援桌機，保留給習慣舊版介面的特定玩家。\n  4. **CV (China View)**：非 RWD（桌機與手機 Code 分開），專為中國市場設計的復刻版本。\n  5. **New Asia (2.0)**：包含內框與外框（可進行存款等作業）。\n- **關鍵數據與使用分佈**：依活躍會員（Active Member）來看，**Mars 版佔比最高**，其次為 2.0 版與 Galaxy版；玩家選擇上仍以「新手版」居多。\n- **重要觀念與常見誤區**：\n  - RWD 版本（Compact、Galaxy）手機與桌機共用同一套 Code，但 **CV 與 Classic 版並非 RWD**，手機與桌機頁面需要獨立維護。\n\n---\n\n#### **主題二：客戶整合模式（API Site vs. Seamless / Athena Site）**\n- **核心概念 / 理論定義**：\n  - **API Site**：客戶網頁以元件（如 iFrame）嵌入Saba體育頁面，**我們不處理會員註冊與登錄**，支援全部 5 種 View。\n  - **Seamless / Athena Site (包網)**：整站由我託管（包含註冊登錄），分為新版包網（Jupiter，支援 RWD 的 Compact / Galaxy）與舊版包網（Classic / 2.0）。\n- **關鍵架構與市場現況**：\n  - 常見站別代稱：SampleSite、SW site (Singal Wallet Site)、CV (Golden 88)、Athena site。目前大部份數百家客戶皆採用 API 串接，包網 Seamless 模式客戶較少（主要分佈於印尼及少數特定站別）。\n\n---\n\n#### **主題三：五大開發與測試環境（Environments）與 DB 劃分**\n- **核心概念 / 理論定義**：提供 **SIT、UAT、Sbtest、Pre-Prod、Production** 等五種環境。\n- **關鍵步驟與環境 SOP**：\n  - **SIT**：提供給越南 QA 團隊測試使用（含 Settlement 結算等操作），**其 DB 與後台完全獨立**。\n  - **UAT**：內部測試環境（如上 Banner 或新功能驗證），與 Production 大部分**共用同一顆 DB**，透過環境標籤進行邏輯區分。\n  - **Sbtest**：環境同 UAT，主要提供給 AM 與外部客戶進行測試。\n  - **Pre-product**：產品正式上線前的保險環境，當新功能影響風險較高時，會先上至此環境，避免直接衝擊 Production 現網玩家。\n\n---\n\n#### **主題四：OneDomain 網址動態拼接機制與入口途徑**\n- **核心概念 / 理論定義**：因應客戶網域頻繁更換的需求，透過動態域名群組（Domain Group）與固定規則拼接 URL 以存取特定前台頁面。\n- **關鍵步驟與拼接公式**：\n  - **前台進入管道**：\n    - **WSite** (SampleSite 快速測試)\n    - **Athena000** (內部新舊版 Demo 入口)\n    - **Get URL API / Deep Link** (帶單次 Token 之 URL，可透過 W space Bot 自動產生)\n    - **SAB B2B (L demo)** (展覽/AM 展示用，免登入，分 Global、Cricket 印度版、Basketball 菲律賓版)\n    - **後門網址** (自行拼接 OneDomain + Q 系列測試帳號與 Central 密碼)\n      - **URL 組成公式**：`RandomID + FunctionCode + OneDomain`。\n    1. **RandomID**（4 碼）：於 Licensee Central 查詢（如 SampleSite、SWSite、CVSite 對應的 ID）。\n    2. **FunctionCode**：區分環境（UAT/Sbtest/Prod）、裝置（Mobile/Desktop）及登入狀態（login/before login/after login，如 `ma`、`mb`、`tm`、`to`）。\n    3. **OneDomain**：於 Licensee Central 查詢（亮黃色標示為 Active domain）。分為 **180**（未認證客戶）與 **112**（已認證客戶）。\n- **講者強調與常見誤區**：\n  - Deep Link 的網址帶有單次效期 Token，**使用一次即失效**，二次存取需重新生成。\n  - 前台連結若突然失效，通常是因為 **Active Domain 已替換**，需至 Central 重新查詢最新的亮黃色 Domain。\n\n---\n\n#### **主題五：前台投注功能與第三方產品劃分**\n- **核心概念 / 投注模式**：\n  - **Single（單腳）**：針對單一賽事盤口下注。\n  - **Mix Parlay（混合過關/串關）**：跨賽事串聯，只要其中一場輸，整張注單即全輸。\n  - **System Parlay（系統過關/複式）**：即使一場輸，其他組合仍可中獎。\n  - **Bet Builder（同場過關）**：可針對**同一場賽事**組合多個盤口。\n  - **Cashout（提前結算）**：玩家可在比賽結束前提早結算注單，鎖定利潤或減少虧損。\n- **營運維護責任劃分**：\n  - **沙巴（Saba）團隊劃分**：Virtual Sports（虛擬體育）、Games (Casino/RNG)、P2P（Betby、Betby2K）等產品已交由沙巴團隊維護，前台僅作為資料接合介面。\n- **講者強調與常見誤區**：\n  - **測試賽事（帶有 `Test` 字樣）絕不能與正式比賽混合進行 Parlay 串關**，否則注單將無法順利 Settle。\n  - **正式環境（Production）的測試帳號嚴禁進行實際下注**。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n1. **CV (China View) 版的誕生——搶佔市場空缺案例**：\n   - **具體情境**：約 3-4 年前，在中國市場佔有率高的「188 小金體育」突然宣佈退出該市場。\n   - **啟發與解法**：團隊抓準時機，花費 3 個月時間緊急復刻出與 188 小金體育一模一樣的介面（即 CV 版），無縫承接其原本的客戶與玩家，成功搶佔市場佔有率。\n\n2. **菲律賓地區客製化 Galaxy 介面**：\n   - **具體情境**：為了更符合菲律賓在地玩家的視覺與使用習慣。\n   - **啟發與解法**：將原本 Galaxy 版的標誌性 Tiffany 藍改為橘色主題配色，並額外加入菲律賓專屬轉帳模組，提升在地轉化率。\n\n3. **串關測試失敗情境**：\n   - **具體情境**：測試人員在測試 Parlay 功能時，挑選了一場名稱帶有 `Test` 的測試賽事與正常賽事進行串關。\n   - **啟發與解法**：系統底層阻擋跨測試與真實賽事的串聯，導致注單失效；測試時必須嚴格遵守「測試賽只能與測試賽串關」的規則。\n\n4. **測試連結失效的排查情境**：\n   - **具體情境**：學員反應使用數個禮拜前的 OneDomain 測試網址突然無法進入前台。\n   - **啟發與解法**：這是因為背景 Domain Group 已更換 Active domain；只需登入 Central 查看黃色亮起的最新 Domain 並替換 URL 尾段即可恢復存取。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動                    | 適用情境或對象                  | 預期成效 / 注意事項                                                                  |\n| :----------------------------- | :----------------------- | :--------------------------------------------------------------------------- |\n| **手動組裝 OneDomain 網址**          | 全體新進學員 / 課後練習            | 熟練掌握 `RandomID + FunctionCode + OneDomain` 公式，能獨立組裝 UAT/Pre-prod/Prod 的測試連結。 |\n| **建立 W Site / Athena000 專用帳號** | 團隊新成員（如 PO / APO）        | 自行註冊並模擬存款，以便深入體驗各 View 介面與投注模式。                                              |\n| **統計並申請 InVision 帳號權限**        | 需使用特定後台/前台工具之成員          | 由團隊統一統計人員名單與所需權限層級，一次性交由 Jason 開通，避免權限不足或重複申請。                               |\n| **測試比賽與正式比賽分開串關**              | QA 與前台功能測試人員             | 進行 Parlay 測試時，嚴禁將帶有 `Test` 的比賽與正式賽事混串，避免注單無效。                                |\n| **正確選用專用測試帳號與禁忌遵循**            | 驗證特殊情境（如成就系統或Production） | 登入Production測試帳號時**絕對禁止下注**；特殊情境（如 Reward 帳號或成就系統）需使用對應帳號（如 `tw` 帳號）。        |\n| **查詢與對照 Error Code 及配色表**      | 前台測試排錯與客製化需求             | 前台遇到跳錯時對照 Central 表格進行初步排查，或參照 UI 配色變更範圍對照表。                                 |\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### **推薦資源與工具**\n1. **Licensee Central 管理平台**：\n   - **Licensee Manage**：查詢各站別的 RandomID。\n   - **OneDomain Setting**：查詢當前亮黃色的 Active Domain。\n   - **Error Code / UI 配色對照表**：用於錯碼排查與客製化配色影響範圍評估。\n1. **PowerBI 報表**：用於查看各 View 版本（Mars、2.0、CV 等）的 Active Member 使用量與關鍵數據指標。\n2. **W space Bot**：Telegram / Help 群組自動化工具，輸入賽事 ID 即可自動呼叫 API 生成帶 Token 的 Deep Link。\n3. **SABA B2B (Lite demo) 網站**：展示用免登入網站（提供 Global、Cricket 印度版、Basketball 菲律賓版）。\n\n#### **Q&A 現場互動精選**\n- **Q1：SIT 與 UAT 環境在資料庫（DB）與後台（BO）上如何劃分？**\n  - **講師解答**：SIT 為完全獨立的測試環境（獨立 DB 與獨立 BO），專供越南 QA 進行 Settle 等測試；而 UAT 與 Production 在大部分資料庫上是共用同一顆 DB（透過環境標籤區分），UAT 與 Sbtest、Production 則有各自標註的後台管理介面。\n- **Q3：Deep Link / Get URL API 生成的連結可以重複使用嗎？**\n  - **講師解答**：不行。該連結帶有一次性效期的 Token，使用過一次後即失效；如需再次進入，必須重新呼叫 API 重新生成新連結。\n- **Q4：System Parlay與一般 Mix Parlay 有何不同？扣款如何計算？**\n  - **講師解答**：Mix Parlay 只要輸掉其中一場，整張注單即全輸；System Parlay會拆解為 4 組獨立注單（包含 3 組兩串一、1 組三串一），每組注單獨立計算且皆需滿足最小投注金額，即使其中一場輸掉，其他組合仍可獲利。"}, {"id": "doc-3", "filename": "3. Neuron Domain on board training by Lydia.md", "title": "3. Neuron Domain on board training by Lydia", "content": "20260907\n>https://docs.google.com/document/d/1rMM7PX611hk2kWCdkjIeScVegt_91cE-IEeRhnL5UCs/edit?usp=sharing\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n\n- 本次培訓由 Lydia主講，核心宗旨在於針對內部同仁梳理 Merchant API（轉帳錢包）與 Single Wallet API（單一錢包）的架構機制、關鍵 API 運作流程及底層 DB 資料庫分層設計。\n- 培訓著重於比較兩大錢包體系在資金存取與下注扣款邏輯上的本質差異，並實際展示五大核心 API 的測試 SOP 及跨部門（與外部 Licensee 客戶端）的協同調用流程。\n- 講師強調許多業務與系統例外處理皆源自「做中學」與實戰經驗（如歷經 2022 年世界盃流量高峰後的補救流程優化），同仁應善用內部 Developer Center 與整合筆記，全面建構系統架構與營運邏輯認知。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### 模組一：錢包架構模式比較（Merchant 轉帳錢包 vs Single Wallet 單一錢包）\n- **核心概念 / 理論定義**：\n  - **Merchant API（轉帳錢包 / Merchant API）**：玩家須先將資金從 Licensee（客戶端）轉入沙巴（Saba）錢包，方可在體育產品中進行下注與操作；提款時再由沙巴轉回 Licensee。\n  - **Single Wallet API（單一錢包 / SW API）**：玩家資金直接保留於 Licensee 端，沙巴接收到下注請求時，直接通知 Licensee 伺服器進行即時扣款。\n- **關鍵步驟、模型或操作方法**：\n  - **權責與整合**：Merchant包含較多轉帳與資金流整合；SW則主要處理下注請求與客戶端 Response 的扣款回應。\n  - **會員建立與 DB 流轉差異**：\n    - **Merchant**：建立會員時資料先存在 Licensee DB，待玩家執行**首次存款**時，系統才將會員資料同步複製至 Main DB。\n    - **SW**：建立會員時即同步寫入 custoMain DB，無需經過首次存款的判斷。\n- **講者強調的重要觀念或常見誤區**：\n  - 區分兩者的關鍵在於「資金存放在哪一端」以及「扣款指令由誰執行」。\n\n#### 模組二：Merchant 轉帳錢包五大關鍵 API 與測試 SOP\n- **核心概念 / 理論定義**：\n  - 整合 Merchant 需掌握五大核心 API：`GetSabaUrl`（取得前台登入網址）、CreateMember（建立會員）、`FundTransfer`（資金轉帳）、`CheckFundTransfer`（轉帳狀態確認）、`GetBetDetail`（取得注單詳細資訊）。\n- **關鍵步驟、模型或操作方法（SOP）**：\n  - GetSabaUrl 測試 SOP：至 Licensee Management 查詢 Vendor ID，輸入 Vendor Member ID（會員帳號）與 Platform（`1` 為電腦版，`2` 為手機版），調用 API 取得 URL 後貼至瀏覽器即可進入前台測試（可於 UAT 或 Production 環境執行）。\n  - FundTransfer & CheckFundTransfer 流程：客戶端發起轉帳打 Merchant Transfer API，由 SABA API 於 Main DB 內執行。若逢高峰期（如世界盃）導致佇列 Pending 過久，系統不會立即回傳 OK，客戶端需主動調用 `CheckFundTransfer` 重新確認最終轉帳結果。\n  - GetBetDetail SOP：可透過注單編號（`transid`）或時間區間（`timeframe`）查詢玩家的詳細注單資訊與結算狀態。\n- **講者強調的重要觀念或常見誤區**：\n  - 當轉帳遭遇 Pending 逾時，**切勿重複轉帳**，應使用 CheckFundTransfer 來驗證實際狀態。\n  - API 規格文檔中含有諸多細部參數（與 PD 邏輯相關），初學者可先掌握主幹流程即可。\n\n#### 模組三：底層 DB 資料庫分層架構\n- **核心概念 / 理論定義**：\n  - 系統底層由多顆資料庫組成，統一統稱為 **Main DB（Main DB）**。\n- **關鍵步驟、模型或操作方法（架構圖概念）**：\n  - **Lic DB**：存放尚未存款的新會員原始資料。\n  - **SiteDB**：存放賽事與體育相關的核心資訊。\n  - **TV（Ticket Vault）**：所有賽事的下注注單會先集中存放在 TV（此階段為大雜燴，尚未依賽種分類）。\n  - **DB06**：分類後的注單 DB（如 `DB061` 屬產品一、`DB062` 屬客戶產品二）。\n  - **CDB / custoMain DB**：客戶 DB，透過中間 Mapping 層將 SiteDB 與 CDB 串聯，再將注單對應至各賽事與 DB06。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n- **案例一：2022 年世界盃流量高峰與轉帳塞車情境**\n  - **實戰情境**：世界盃賽事期間瞬間湧入龐大流量，導致轉帳請求在 Main DB 中佇列排隊過久。\n  - **啟發與解法**：系統於排隊逾時後不會盲目回覆成功，客戶端必須調用 `CheckFundTransfer API` 進行二次驗證。此外，團隊在 2022 年世界盃後補強了多項補救流程（如重新結算 `resettle` 與結算通知補發機制），防止狀態不一致。\n- **案例二：Single Wallet 下注扣款逾時與網路異常情境**\n  - **實戰情境**：玩家於前台下注時，請求由 W Space 部門傳遞至 Neuron 部門，再由 Neuron 發送至 Licensee 端進行扣款。若 Licensee 端伺服器回應逾時或網路中斷。\n  - **啟發與解法**：系統設定有約 30 秒的等待上限，不可能讓前台無限制旋轉等待。若逾時未收到客戶端的扣款成功回應，系統會觸發 `Cancel Bet`（取消下注）或回傳失敗/平手狀態，該筆注單將不予成立，確保資金與注單狀態同步。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動                       | 適用情境或對象           | 預期成效 / 注意事項                                                                       |\n| --------------------------------- | ----------------- | --------------------------------------------------------------------------------- |\n| 使用 Postman 或 API 工具於 UAT 環實操打 API | 新進同仁 / API 整合測試人員 | 熟練掌握 `GetSabaUrl` 帶入 Vendor ID、Member ID 與 Platform（`1` 電腦 / `2` 手機）之 SOP         |\n| 研讀 Developer Center 與各類別 API 規格文檔 | 全體學員 / 技術對接人員     | 掌握最新 Merchant 與 Single Wallet 的規格、參數及流程圖；Single Wallet 文檔由講者維護，Merchant 由 TM 部門維護 |\n| 建立線上營運邏輯與 LAP 報表需求認知              | 商業邏輯與產品營運人員       | 了解前後款營運模式，以及新產品開放時需搭配的 LAP 報表需求                                                   |\n| 排查單一錢包下注異常與重結算問題                  | 技術支援與維運人員         | 善用 `Cancel Bet` 與 `resettle` API，遇複雜例外情境需與 PD 進一步確認處置邏輯                           |\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### 推薦資源與工具\n- **Developer Center（開發者中心）**：提供對外 Merchant 與 Single Wallet 的最新 API 功能說明、流程圖與參數規格。\n- **Postman / API 測試工具**：用於 UAT 與 Production 環境的 API 測試與驗證。\n- **Licensee Management / License Central**：用於查詢 Vendor ID 與管理 Licensee 設定。\n- **專屬與內部 API 文檔**：包含 Single Wallet（講者維護）、Merchant（TM 部門維護）以及 ELK 與 DB 架構圖筆記。\n\n#### Q&A 互動精選\n- **問：目前的線上問題處理流程（Production Issue Process）分工為何？**\n  - **答**：線上問題會先由 PD 進行初步判斷與排查，確認後再由技術人員查看根本原因。由於業務邏輯較為繁雜，建議同仁透過實戰「做中學」，並持續將案例經驗整理至筆記中。\n"}, {"id": "doc-4", "filename": "4. Data source API on board training by Michelle.md", "title": "4. Data source API on board training by Michelle", "content": "20260910\n>https://drive.google.com/file/d/1qwtRGGJ5s-O9ICb_97LVMAXflgEwOaGJ/view?usp=sharing\n\n---\n\n### 1. 核心結論與關鍵主軸\n- **本次教育訓練旨在深入解析 Vagus 團隊提供的兩大數據源（Data Source）產品——Direct API 與 Oddsfeed API，以及最新推出的 Data Push（Odds Push API）技術架構**。\n- **核心理念強調整合方案應高度契合客戶的技術量能、資料維護需求與前台呈現邏輯**。\n- **培訓重點拆解了 Direct API 的「按需拉取」、Oddsfeed API 的「全量同步與加工彈性」，以及 Data Push 透過 RabbitMQ 主動推送「差異欄位」的即時性優勢**。\n- **最大收穫在於釐清不同數據架構的適用情境、前台產品（如 Quick Widget、JollySports）的 API 呼叫映射關係，並掌握相關 UAT 測試資源**。\n\n---\n\n### 2. 核心知識點與方法論\n\n#### 模組一：數據源雙軌架構（Direct API vs. Oddsfeed API）\n- **核心概念 / 理論定義**：\n  - **Direct API：**玩家前端裝置直接向數據源獲取資料**；資料儲存於我方系統，前端依據顯示需求即時呼叫 API。\n  - **Oddsfeed API：**客戶後端將完整賽事資料同步回自家 DB**；由客戶後端統一撈取儲存後，自行整理並提供給前台玩家。\n- **關鍵步驟與架構流程**：\n  - **Direct API 流程**：玩家前台發起請求 -> 客戶後端向我方取得 Token -> 玩家前端持 Token 呼叫 Direct API 取得當前頁面所需賽事與賠率（如切換足球/籃球頁面時才個別拉取）。\n  - **Oddsfeed API 流程**：客戶後端 Server 抓取完整賽事賠率 -> 透過 `version key` 比對資料是否有變動（如比分更新或 ID 異動） -> 存入客戶 DB 並自行加工作呈現。\n- **講者強調的重要觀念與常見誤區**：\n  - **常見誤區**：誤以為 Direct API 是由客戶後端一次把所有賽事抓走；實際上 **Direct API 是依據前台實際需求「動態拉取」**。\n  - **選型決策心法**：客戶若不需管理/加工賽事且技術量能有限，建議採用 **Direct API**（簡單易用）；若需自訂聯賽/玩法名稱、篩選特定賽事且具備開發量能，則建議使用 **Oddsfeed API**（高彈性）。\n\n#### 模組二：新世代即時推送機制（Data Push / Odds Push API）\n- **核心概念 / 理論定義**：\n  - **Data Push（Odds Push API）**：打破傳統 Pull（被動拉取）機制，當數據產生變動時，由**數據源主動推送數據給客戶**。\n- **關鍵步驟與架構流程**：\n  - 客戶訂閱 RabbitMQ (Message Queue) -> 數據源監測到變動 -> **僅推送有變動的欄位**（例如單獨推送比分或賠率 Odds 變更，而非整包資料） -> 客戶系統轉推至前台。\n- **講者強調的重要觀念與常見誤區**：\n  - **常見誤區**：Data Push 適用於「賽事與賠率資料」，但**下注交易（如 Get Ticket / Place Ticket）仍維持現有 API 流程**。\n  - **市場趨勢與雙軌並行**：Data Push 為歐美先進市場趨勢；目前新舊機制將**兩套並行**，舊客戶維持 Pull，新客戶（如目前正進行籃球整合的客戶）引導使用 Data Push。\n\n#### 模組三：前台產品對應與 API 映射邏輯\n- **核心概念 / 理論定義**：\n  - 解析常見前台產品（MARS、Galaxy、SLMT、Quick Widget、JollySports）背後由 Direct API 組合呈現的架構。\n- **關鍵步驟與操作方法**：\n  - **前台頁面 API 映射**：\n    - **賽事列表頁（Odds Page）**：呼叫 `getevent` 取得滾球（Live）或未開賽（Available）賽事。\n    - **單場賽事頁（Single Match Page）**：呼叫 `getgamemarket` 取得該場次所有玩法的賠率（Odds）。\n    - **投注紀錄（Statement）**：呼叫 `getticketdetail` 查詢注單細節。\n  - **JollySports 測試連結生成**：透過 UAT 環境 Swagger 呼叫 `getlogin URL` 工具，帶入 `vendor ID` 與 `member ID` 即可自動生成免密碼測試連結。\n- **講者強調的重要觀念與常見誤區**：\n  - **敏感品牌去標籤化**：JollySports 專為特定市場設計，**前台與網址絕對不可露出「沙巴」字樣**，因此特別開發專屬的 `getlogin URL`（無沙巴字樣）替代標準 `saba URL`。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n1. **案例一：客戶對賽事資料的過濾與自訂需求（Oddsfeed API 應用）**\n   - **實戰情境**：客戶整合數據時，希望前台僅顯示 Virtual 虛擬賽事並過濾掉其他賽事（如沙巴籃球），同時希望能自訂球隊暱稱（nickname）與盤口名稱。\n   - **啟發與解法**：Direct API 直接輸出我方設定好的規格與名稱，無法滿足此類需求；解法為**推薦客戶採用 Oddsfeed API**，將資料拉回客戶 DB 後自由加工與篩選。\n\n2. **案例二：傳統 Pull 模式的更新時延與 Push 解法**\n   - **實戰情境**：客戶若每 10 分鐘才向數據源拉取（Pull）一次資料，導致前台資料更新產生高達 10 分鐘的延遲。\n   - **啟發與解法**：**引進 Data Push（Odds Push API）**，改為 RabbitMQ 訂閱模式，有異動即時推送且僅傳送「異動欄位」（如比分改變僅推比分），節省封包傳輸量並實現即時更新。\n\n1. **案例三：JollySports 特殊市場去品牌化**\n   - **實戰情境**：JollySports 營運於灰色市場，需避開任何品牌標示（如沙巴）。\n   - **啟發與解法**：技術團隊單獨獨立一支 `getlogin URL` API，產生的網址完全去除品牌敏感字眼，確保順利進站測試與營運。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動             | 適用情境或對象                | 預期成效 / 注意事項                                                                    |\n| :---------------------- | :--------------------- | :----------------------------------------------------------------------------- |\n| **數據源選型評估**             | 產品經理（PM）與技術整合團隊評估新客戶需求 | 精準選擇 Direct API 或 Oddsfeed API，避免選型錯誤導致客戶後端無力加工或無法支援自訂 UI。                     |\n| **推廣 Data Push 機制**     | 歐美新客戶或對賽事即時性高度敏感之專案    | 大幅降低頻寬消耗與資料時延；**注意事項**：下注流程仍需搭配現行 API。                                         |\n| **運用 Demo 站與 UAT 工具測試** | UI/UX 設計師、測試人員（QA）與 PM | 使用 JollySports Demo 站（支援 Quick Login）體驗介面，並透過 Swagger `getlogin URL` 進行工具開發測試。 |\n\n\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### 推薦工具與延伸資源\n- **官方技術文件**：Direct API 及 Oddsfeed API技術文件（附於簡報中）。\n- **JollySports Demo 展示站**：提供 Demo 站台，支援 Quick Login（免輸入帳密即可登入體驗介面）。\n- **UAT 測試環境**：Swagger 介面及 `getlogin URL` 網址生成器。\n\n#### 現場 Q&A 互動精選\n- **Q1：Oddsfeed API 模式下「數據加工」具體包含哪些內容？**\n  - **講師解答**：例如客戶取得所有賽事後，可自行選擇只要 Virtual 賽事（排除沙巴籃球等其他球種），或是自行修改聯賽名稱、球隊暱稱（nickname）及盤口名稱。\n- **Q2：目前 Data Push (Odds Push API) 的導入進度為何？**\n  - **講師解答**：目前已有 1 家客戶正進行籃球項目整合，完成後將擴展至其他體育項目並上大線。未來將保持 Pull 與 Push 兩套並行（舊客戶維持 Pull，新客戶推廣 Push）。\n- **Q3：Data Push 與內部後端的 EDS（Event Data Service）有何不同？**\n  - **講師解答**：EDS 是內部後端使用的 Service；Data Push 則是對外透過 RabbitMQ 推送異動欄位給客戶。兩者傳送的資料內容相同，但分別屬於對內與對外的架構設計。\n"}, {"id": "doc-5", "filename": "5. BO on board training by Elle.md", "title": "5. BO on board training by Elle", "content": "\n>https://docs.google.com/document/d/1rMM7PX611hk2kWCdkjIeScVegt_91cE-IEeRhnL5UCs/edit?usp=sharing\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n本次培訓旨在針對公司內部核心後台系統（包含 **OPC**、**LAP** 與 **Developer Center**）進行功能架構、權限分工與實務操作流程的全面梳理。培訓的核心理念在於確立不同團隊（如 PO、PD、TM、AM、Infra）在後台模組中的權限邊界，防止因誤操作導致設定混亂或帳單計算錯誤。本次培訓最大的收穫是掌握了重要排查工具（如玩家資料查詢、注單 Extra Info 追查、對帳報表解讀）的使用方法，並明確標示出絕不可誤觸的高風險操作（如隨意建site、誤點 Disable 等）。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### **模組一：OPC 一站式權限管理平台（One-stop Permission Platform）**\n* **核心概念 / 理論定義**：\n  * **OPC** 為公司內部與 Licensee 一站式管理權限的平台，可通往 Licensee Central、LAP（Licensee Admin Portal）、UAT 等後台。目前 OPC 已停止開發新功能，但仍維護並修復現有問題。\n* **關鍵步驟 / 操作方法**：\n  * **正確登入流程**：公司內部人員必須透過專屬的 **URL** 連結登入。\n  * **玩家資料查詢（Licensee Member Query）**：選擇站別並輸入 Username，可查看玩家資料、Operator ID 及是否屬下線/散戶。\n  * **注單 ExtraInfo 追查**：輸入票號查詢 info 欄位數據（如 p1、CC201、p2048），對照文檔中的 **Extra 對照表** 找出對應 BAC 碼（例如 BAC 2048），即可精確判定該票的下注屬性。\n  * **API 接打（Merchant API）**：存放 Merchant API 密鑰，可直接在平台內進行 UAT API 測試，無需另用 Postman。\n* **重要觀念與常見誤區**：\n  * **常見登入誤區**：同仁常反映「OPC 登不進去」，多半是因為誤用了帶有客戶 Vendor ID 的 URL。內部帳號若使用客戶 URL 登入將無法通過驗證。\n\n#### **模組二：LAP 後台管理系統（Licensee Admin Portal）**\n* **核心概念 / 理論定義**：\n  * **LAP** 為客戶營運時使用的核心後台，涵蓋站別管理、產品開關、水位微調及每月帳務對帳等模組。\n* **關鍵步驟 / 操作方法**：\n  * **站別清單與環境切換（Licensee / Licensee List）**：可查詢 Site 列表與 Vendor ID；勾選 **Test** 可切換至測試環境 LAP URL。\n  * **建site與幣別開啟（Add Site & Currency）**：通常由 AM 操作，選取檢查、填入新 Site Name、日期與幣別後送出，系統會自動觸發一系列建site API（如越南幣別、遊戲開關等）。TM 確認客戶串接完成後，會在 **AD currency** 將對應幣別線路開啟。\n  * **水位與賠率微調（Spread Settings）**：由 PO 透過 **Spreadjust setting** 進行運動項目 +/- 分水設定（例如加 1 分水或減 1 分水）；亦可使用 ** Adjuster** 設定動態 0.5% 損的細質水位調整。\n  * **注單與對帳報表（Ticket Center & Reports）**：**Ticket Center** 用於查詢注單詳情；**Win/Loss Report** 供客戶每月核對帳戶 turnover 與損益抽成；**Commission Report** 記錄 Bonus 金額、Streamer Tips 等非營業額費用。\n* **重要觀念與高風險誤區（極度危險操作）**：\n  * **Disable 按鈕**：點擊會跳出確認是否停用該 Site，**千萬不可誤點**。\n  * **Edit 設定**：裡面的設定主要供 PD 使用，隨意修改會導致設定跑掉而「出大事」。\n  * **不可隨意建site**：建site會自動產生全新 ID 並呼叫多個 API，不可隨意測試點擊，否則會浪費資源。\n  * **Domain 設定**：由 Infra維護，內部人員切勿操作，以免影響前端隨機生成 URL 與玩家登入。\n  * **報表數據維護權責**：Tticket Center 與報表背後的數據均由 **越南 SX 團隊** 維護，PO 僅負責傳遞搜尋條件；新產品上線時，後台 Ticket Center 顯示內容必須與前台 Statement 畫面完全一致，客戶才對得起來。\n\n#### **模組三：組織架構與權限控制（Hierarchy & Permission Controls）**\n* **核心概念 / 理論定義**：\n  * 沙巴（Saba）系統下的層級架構為：「**Saba 總台 -> Licensee -> 下線**」。\n* **關鍵步驟 / 操作方法**：\n  * **下線產品開關**：由 TM 在 **Site** 模組控制特定下線是否開啟特定產品（如 Virtual 2）。\n  * **賽事開關（Match Controller）**：當客戶要求關閉特定聯賽時，由 TM 從此處關閉。\n  * **Label 報表分群**：LAP 後台獨有的權限概念，將多個下線歸類至同一 Label，登入該 Label 帳號者僅能查看屬下下線的報表與玩家資料。\n* **重要觀念與常見誤區**：\n  * **批次設定權責**：**Adjustment** 批次設定與賽事開關影響較廣，應由 TM 在 Slack 群組接收需求後操作，研發/PO 團隊不自行隨意變更。\n\n#### **模組四：Developer Center 與客戶串接認證（Developer Center & Integration Testing）**\n* **核心概念 / 理論定義**：\n  * 供客戶查閱文件與進行 API 串接測試的開發者中心，內部使用共用帳號管理（包含 **X8S** 與 **CX8** 兩大頁籤）。\n* **關鍵步驟 / 操作方法**：\n  * **API 串接測試工具**：客戶於串接階段透過此工具測試 API，內部人員需至 **ELK** 查看日誌與 Request/Response 內容，確認客戶真有認真串接完成。\n  * **Fund Transfer Tool**：客戶正式上線前必須測試並通過檢查的資金轉移工具。\n* **重要觀念與常見誤區**：\n  * 目前 Developer Center 文件改版與維護已改為由 TM 開單給 PO/PE 處理，不再由 TM 直接於後台改動。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n1. **案例一：員工登入 OPC 頻繁失敗排查**\n   * **實戰情境**：同仁常回報「我的 OPC 登不進去，系統是不是有問題」。\n   * **背後原因與解法**：經排查發現同仁使用了含有客戶 Vendor ID 的 URL。內部員工登入 OPC 必須使用專屬的 URL  連結；若用客戶專屬 URL，系統會認定帳號不符而拒絕登入。\n1. **案例二：建site過程 API 呼叫異常排查**\n   * **實戰情境**：AM 在建立新 Site時，填完名稱、日期與幣別送出後，流程在某個步驟莫名出錯。\n   * **背後原因與解法**：建site會自動呼叫一連串 API（包括建site、越南幣別、遊戲開啟、取消 API 等）。當流程中途失敗時，PO團隊需接獲通知並協助進行技術排查，找出具體是哪一支 API 呼叫失敗。\n1. **案例三：注單 ExtraInfo BAC 碼追查下注來源**\n   * **實戰情境**：客服或運營需要確認某張爭議注單是在哪個版面或管道被下注的。\n   * **背後原因與解法**：在 **Extrainfo** 輸入票號後查出 info 欄位的 BAC 值（例如 BAC=2048），再比對文件中的 Extra 對照表，即可精確對照出該注單被下注的管道與詳細情境。\n1. **案例四：客戶每月對帳金額不符爭議處理**\n   * **實戰情境**：客戶月底核對帳目時，發現最終金額與預期不符並提出質疑。\n   * **背後原因與解法**：客戶主要透過 **Win/Loss Report** 查看 turnover 與抽成，並透過 **Commission Report** 確認 Bonus、Streamer Tips 等非營業額費用。若欄位金額有誤，PO 會先檢查搜尋條件設定，並與後端數據維護方（越南 SX團隊）共同排查處理。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動                           | 適用情境或對象                | 預期成效 / 注意事項                                                                |\n| :------------------------------------ | :--------------------- | :------------------------------------------------------------------------- |\n| **使用專屬 URL 登入 OPC**                   | 內部全體同仁 / Licensee      | 確保順利登入後台；切記不可使用帶有客戶 Vendor ID 的 URL。                                       |\n| **查閱註單 ExtraInfo 對照表**                | PO / 客服 / 技術排查人員       | 透過 `Extrainfo` 輸入票號並比對表格（如 BAC 碼），迅速定位注單屬性；細節已整理於文件，無需手寫筆記。                |\n| **嚴禁誤觸危險按鈕（Disable / Edit / 亂建site）** | 全體後台操作人員（PO / PD / AM） | 防止系統設定跑掉「出大事」、誤關站別或浪費系統資源建site。                                            |\n| **透過 Spreadjust Setting 進行水位微調**      | PO（受 AM/Licensee 委託時）  | 精確調整運動項目 +/- 分水或動態 0.5% 損；設定前須再三確認條件，避免引發帳務與成本計算錯誤。                        |\n| **核對前後台 Statement 一致性**               | PO / 產品團隊（新產品上線時）      | 確保 `Ticket Center` 後台顯示內容與前台 Statement 畫面完全一致，避免客戶對帳困難。                    |\n| **TM 審核與開啟下線產品/幣別開關**                 | TM（Team Manager）       | 經確認客戶串接完成後，於 `currency` 及 `Site` 開啟幣別與產品線路（如 Virtual 2）。                   |\n| **透過 ELK 與工具檢查客戶 API 串接**             | TM / 技術支援（客戶串接階段）      | 於 Developer Center 檢查客戶測試 API 的 Request/Response 與 ELK 記錄，確保客戶完成認真串接後方可上線。 |\n\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n* **推薦資源與延伸資料**：\n  * **內部分享文檔 / 筆記：講師指出許多細節對照表（如 `ExtraInfo` 的 BAC 碼對照表、SiteConfig 鍵值等）均已完整寫在內部分享文檔中，同仁可直接查閱。\n  * **SiteConfig 對照表**：用於查詢與對照 `site query` 中各站別設定鍵值（Key）的意思，必要時需進行語義確認。\n  * **Merchant API 文件**：提供客戶串接使用的 API 文件與 UAT 測試 Key，可在平台內直接打測試。\n\n- [Bettrans.ExtraInfo](https://docs.google.com/spreadsheets/d/10YfDE3N03ZkCb5PRSzktTsTtfU_JDRew6D9er-ETHWM/edit?gid=1699514160#gid=1699514160) - **用於確認 ExtraInfo 欄位定義與對應內容**\n- [OddsType](https://docs.google.com/spreadsheets/d/10YfDE3N03ZkCb5PRSzktTsTtfU_JDRew6D9er-ETHWM/edit?gid=184444680#gid=184444680)\n- [SiteConfig Key List](https://docs.google.com/spreadsheets/d/1QjILZeR0lLS7d6zxGLekuklRTya96JmFHvGKaoXUjck/edit?gid=0#gid=0)\n- [SiteConfig 說明註記](https://docs.google.com/spreadsheets/d/1Nby3mw7Lg7Owbq2JulBvYt4dSzJkSYCBHLANL9HdzpM/edit?gid=172032950#gid=172032950)\n- [Licensee Central](https://docs.google.com/spreadsheets/d/1UPEseMPbgTVGCgcbf0Wn84xKWu7Xr3PBGaBK8b9JSvo/edit?gid=1209137768#gid=1209137768)"}, {"id": "doc-6", "filename": "6.1 主播前台 on board training by Jenny.md", "title": "6.1 主播前台 on board training by Jenny", "content": "20260922\n>https://docs.google.com/presentation/d/1MeYH9fczzAr6GH2ghvxLMJJB2dnBmunj/edit?usp=drive_link&ouid=101109970901498170336&rtpof=true&sd=true\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n\n本次培訓由 Jenny 主講，旨在幫助團隊快速掌握「主播前台（Anchor Front-end）」的服務範圍、介面架構與核心功能。培訓明確劃分了內部使用的 Plugin 與外部客戶串接的 Widget 兩大產品形態，並詳細解析 Type 1 至 Type 3 三種彈性視訊版型配置。產品設計結合了聊天室互動（打賞、幸運箱、轉盤、帶單）與多樣化下注模組（Quick Bet、Next Market、Next Goal、主播推單），以大幅提升玩家的觀看留存與下注轉化。此外，系統亦整合了夜間加油站與搶球等營運活動，並引進 Agora AI 即時字幕與多語系翻譯功能，打破跨國玩家的語言隔閡。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### 主題一：產品形態與介面串接（Plugin vs. Widget）\n\n- **核心概念 / 理論定義**：\n    - **Plugin（內部串接）**：供公司內部平台（如 C端 member site）串接的 API，提供純訊源、訊源+聊天室、純聊天室等三種版型選擇。\n    - **Widget（外部串接）**：專供外部客戶直接內嵌於自訂位置（如首頁）的 API。\n- **關鍵步驟、模型或操作方法**：\n    - **串接前置條件**：外部客戶使用 Widget 前，必須先在 S8（沙巴體育）系統中完成建賽。\n    - **API 轉接架構**：外部客戶呼叫 Widget 時不直接打到主播團隊 API，而是先打到 NEUR API，再由 NEUR 協助整合轉接至主播團隊。\n    - **影音訊源供應**：一般賽事訊源主要由 GI 與 Cloud 供應（Cloud 目前僅支援足球賽事），主播賽事則由主播團隊 B 站自行控制。\n- **講者強調的重要觀念或常見誤區**：\n    - **常見誤區**：誤以為外部客戶可隨意調用 Widget 或直接對接主播團隊 API。\n    - **觀念澄清**：Plugin 可透過參數靈活控制內部需求，而 Widget 則嚴格受限於 S8 建賽資料與 NEUR 轉接架構。\n\n#### 主題二：多元版型樣式（Layout Types）\n\n- **核心概念 / 理論定義**：\n    - **Type 1**：純視訊訊源區塊（包含一般訊源與 GB 切換）。\n    - **Type 2**：訊源搭配聊天室（若賽事有配置主播與聊天室，預設開啟此畫面，玩家可邊看邊聊並自由收合聊天室）。\n    - **Type 3**：純聊天室（最早期版型，適用於不預設開啟直播的賽事，進入內頁顯示比分板與預設收合的聊天室，由玩家手動展開）。\n- **關鍵步驟、模型或操作方法**：\n    - **跨平台支援**：所有版型均支援 PC 全螢幕與手機轉屏（豎屏/直屏）顯示環境。\n- **講者強調的重要觀念或常見誤區**：\n    - 若 Type 3 版型聊天室畫面跨到全螢幕，系統將不提供全螢幕切換情境。\n\n#### 主題三：聊天室互動與打賞機制（Interactive & Monetization Features）\n\n- **核心概念 / 理論定義**：\n    - **發言門檻**：玩家發言需滿足門檻（在直播間有任意打賞，或該場賽事達到一定下注金額，二擇一即可）。\n    - **打賞分類**：禮物區分為「活動」、「精選（基礎禮物）」、「VIP 禮物」與「幸運箱」四個分頁。\n    - **轉盤互動**：主播可自行開啟/關閉的互動功能，提供預設或主播客製化文字內容，並設有高、中、低三種消費金額檔位。\n    - **帶單與跟單（Order Sharing）**：玩家或主播可將注單分享至聊天室，其他玩家點擊後可快速進行跟單。\n- **關鍵步驟、模型或操作方法**：\n    - **餘額與扣款**：開啟禮物區時會即時抓取沙巴最新餘額，扣款後同步刷新。\n    - **後台開關控制**：打賞開關由確認端/商戶後台控制。\n- **講者強調的重要觀念或常見誤區**：\n    - **常見誤區**：以為轉盤與打賞是各自獨立設定的。\n    - **觀念澄清**：轉盤與打賞共用底層商業後台開關，若客戶要求關閉打賞，轉盤功能將連帶被停用。\n\n#### 主題四：系統整合下注功能（Betting Integrations）\n\n- **核心概念 / 理論定義**：\n    - **Quick Bet（QB）**：聊天室內整合的快速投注介面，可滑開選單進行即時下注。\n    - **Next Market**：主打未來 5 分鐘事件預測（如是否進球、射門），時間臨近時主動推播。\n    - **Next Goal（NG）**：預測下一個進球隊伍（隊伍 A、隊伍 B 或無進球）。\n    - **主播推單**：主播根據專業或喜好推薦玩法，同一時間最多展示 2 張推單。\n- **關鍵步驟、模型或操作方法**：\n    - **底層 API 串接**：整體下注流程均調用「德瑞 API（Derui API）」。\n    - **NG 彈窗觸發機制**：可由系統在任一隊得分時自動觸發，亦可由主播在後台預判即將進球時手動觸發彈窗。\n- **講者強調的重要觀念或常見誤區**：\n    - **盤口差異**：Quick Bet 使用德瑞回傳的玩家盤口，不一定與傳統賽事頁盤口完全一致。\n    - **Next Market 開啟限制**：非所有足球賽事皆有 Next Market，需聯賽規模足夠大且德瑞有足夠數據時才會開啟。\n\n#### 主題五：營運活動與 AI 輔助體驗（Campaigns & AI Tools）\n\n- **核心概念 / 理論定義**：\n    - **深夜加油站**：針對晚間 10 點至隔天清晨 6 點之賽事辦理的累積任務，玩家累積觀看時間、下注金額與互動達 100% 可解鎖啤酒禮物贈予主播。\n    - **世界盃搶球活動**：世界盃賽事進球時，畫面彈窗讓玩家於 5 秒內搶球開獎（獎品為 P幣/PPE）。\n    - **AI 即時字幕與翻譯**：與 Agora（聲網）合作，提供主播語音轉即時字幕（預設開啟，依玩家語系顯示，不支援則預設英文），以及聊天室訊息單條翻譯功能。\n- **關鍵步驟、模型或操作方法**：\n    - **訊息翻譯判定邏輯**：系統依據發言玩家的 `user language` 標籤判定是否提供翻譯按鈕，而非依據純文字語言判斷。\n- **講者強調的重要觀念或常見誤區**：\n    - **搶球假數據**：搶球結果顯示的「手速超越 X% 對手」為系統配置的虛擬數據，非真實即時排名。\n    - **P幣使用限制**：搶球獲得的 P幣（PPE）因底層為德瑞架構不支援聊天室，獲取後無法在聊天室直接使用，僅能在主站其他區域使用。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n- **案例一：深夜加油站（晚間 10 點至凌晨 6 點賽事）**\n    - **實戰情境**：針對深夜離峰時段的賽事，提升玩家留在直播間的觀看時間與互動動機。\n    - **背後啟發與解法**：設計遊戲化進度條，將觀看時數、下注金額與互動行為量化為任務值，達標後自動送出啤酒禮物給主播，既增強主播與玩家的黏性，又帶動深夜時段的下注與打賞收益。\n- **案例二：世界盃進球 5 秒搶球與轉化**\n    - **實戰情境**：在世界盃高關注度賽事中，利用進球瞬間的高昂氣氛進行即時互動。\n    - **背後啟發與解法**：進球後 5 秒內觸發搶球彈窗，利用限時刺激與顯示手速超越百分比的心理誘因吸引參與；搶球結束後頁面直接引導玩家預測下一波賽況（Next Market / Next Goal），順暢完成從活動到下注的行為轉化。\n- **案例三：跨國多語系玩家聊天室互動**\n    - **實戰情境**：不同語言背景（如英文、越南語等）的玩家同時在直播間觀看賽事並發言。\n    - **背後啟發與解法**：結合 Agora 語音轉文字字幕與基於玩家 `user language` 的訊息翻譯開關，使非同語系的發言能一鍵翻譯，降低跨國社群互動門檻，營造無障礙觀影體驗。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n|建議實踐項目 / 行動|適用情境或對象|預期成效 / 注意事項|\n|---|---|---|\n|**外部客戶 Widget 串接前置檢查**|外部 B2B 客戶技術 / 營運對接團隊|務必確認客戶已於 S8 系統完成建賽，且 API 請求需指向 NEUR 轉換層而非直接呼叫主播團隊。|\n|**打賞與轉盤權限停用評估**|商戶營運人員 / 客服團隊|若客戶要求關閉打賞功能，需向客戶說明轉盤功能將同步被停用（兩者共享後台開關）。|\n|**免責聲明（Disclaimer）常駐配置**|產品與法務團隊|不論是否僅有串流（Streaming）或 GB，設定選單內的免責聲明按鈕均為公司法規強制要求，不可隱藏。|\n|**下注 API 盤口邏輯對齊**|前端開發與 QA 測試團隊|需注意 Quick Bet 介面係透過德瑞 API 取得盤口，且 Next Market 僅限於資料充足的大型足球賽事開啟。|\n|**P幣（PPE）獎勵使用引導**|講師未明確指定（建議產品營運團隊）|搶球活動獲得之 P幣目前無法在聊天室消費，需於活動說明頁明確標示，避免玩家誤解。|\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n- **推薦資源與系統**：\n    - **訊源與 AI 服務商**：GI、Cloud（僅支援足球賽事）、Agora（聲網，提供 ASR 即時字幕與翻譯底層）。\n    - **底層系統 API**：S8（沙巴體育）、NEUR（外部 Widget 轉接 API）、德瑞 API（Derui API，處理所有投注流程）。\n    - **延伸資料**：講師 Jenny 將於會後將培訓簡報（PPT）分享至團隊溝通管道。\n- **Q&A 互動精選**：\n    - **學員提問**：在 Plugin 設定選單中有一個「免責聲明」按鈕，若在只有單純 Streaming（串流訊源）、沒有 GB/主播建議下注的情境下，該按鈕是否可以被隱藏或屏蔽？\n    - **講師解答（Jenny）**：**不可以隱藏，必須常駐顯示。** 免責聲明是公司法規（Legal）強制要求設置的。主要原因在於賽事版權極其昂貴（如 NBA 單季版權高達一兩千萬），公司無法購買所有版權，且訊源傳輸可能存在時間差。設置免責聲明旨在明確告知玩家「訊源僅供參考」，只要畫面有展示訊源，該免責聲明就必須保留。\n\n\n"}, {"id": "doc-7", "filename": "7. Poly on board training by Sera.md", "title": "7. Poly on board training by Sera", "content": "20260916\n\n>https://docs.google.com/presentation/d/1065SNeJ1V7K6Eh0O6zWqy0PhXro-HVEy/edit?usp=sharing&ouid=101109970901498170336&rtpof=true&sd=true\n\n\n---\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n- **本次培訓旨在全面梳理團隊承接與開發的多款 APP 產品線（包含馬甲包、SDK 整合模組、合規 C 端應用及體育資訊站）之架構與發行策略。**\n- **核心理念強調在官方應用商店嚴格監管下，透過 A/B 面馬甲包審查、SDK 模組化嵌入、Web 捷徑備援與內購虛擬化等多元技術，達成合規避險並最大化產品覆蓋率。**\n- **本次最大的收穫為釐清各產品（如 T88、Jioo live APP、DM、BCP 等）的 API 串接邏輯、雙貨幣變現體系與主播社交互動功能，為後續營運轉化與跨站台數據監控奠定清晰基礎。**\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### **主題一：應用商店避險與上架策略（馬甲包 A/B 面機制）**\n- **核心概念 / 理論定義：** 由於博弈相關 APP 無法直接上架至 App Store 或 Google Play，因此採用「馬甲包」（Cloaked App）機制，區分審查人員看到的 A 面與實際用戶使用的 B 面。\n- **關鍵步驟與操作流程：**\n  1. 開發並上架無博弈關聯的「A 面」APP 通過官方商店審查。\n  2. 審查通過後，用戶透過外部專屬下載連結點擊開啟。\n  3. 經系統審核身分後，將用戶引導導流至包含完整功能的「B 面」（如 spacebook ）。\n- **講者強調的重要觀念或常見誤區：**\n  - **上架商店仍具備被下架風險：** 若遭競爭對手或用戶檢舉/投訴，依然有被商店下架或封號的可能，必須隨時準備替代方案。\n\n#### **主題二：現有 APP 模組化串接（Module 跟 Package / SDK 整合）**\n- **核心概念 / 理論定義：** 針對已有原生 APP 且不願額外發行獨立應用的客戶，提供 SDK/Package 讓其直接將產品功能嵌入既有 APP 中。\n- **關鍵步驟與操作流程：**\n  - 提供原生開發（如學生員/Native）與跨平台（如開發者/Flutter）兩種 Package 進行整合。\n  - 支援客戶獨立品牌客製化，包括替換 APP Logo、Banner 廣告圖，資料則透過後台 direct API連動。\n- **講者強調的重要觀念或常見誤區：**\n  - 原先採用 Mobile 網頁嵌入的操作體驗較差，改用 Package 整合能顯著提升 APP 內操作的流暢感。\n\n#### **主題三：合規 C 端商店營運與變現機制（以 Jioo live APP 為例）**\n- **核心概念 / 理論定義：** 直接上架雙平台商店的合規 B2C 娛樂應用，完全遵守官方商店內購與合規規範。\n- **關鍵步驟與操作模型：**\n  - **雙貨幣儲值體系：** 設有 Jioo coin(J幣, = Saba coin) 與 Diamond（1 Diamond = 1 美金），儲值完全走 Apple Store 與 Google Play 官方內購渠道。\n  - **虛擬化下注機制：** 下注與獲利僅能使用虛擬幣，且**嚴禁將虛擬幣轉出或提現至個人銀行帳戶**。\n  - **主播社交與變現功能：** 包含主播動態牆（付費解鎖照片小鎖頭）、禮物打賞（背包系統、VIP 1-10 階級特效）、排行榜（富豪榜、主播榜、按讚榜、球隊榜）與遊戲化競猜。\n- **講者強調的重要觀念或常見誤區：**\n  - 下注介面不可呈現過於直接的博弈風格，需包裝為「競猜」（猜輸贏、猜大小）等遊戲化體驗以符合商店合規審查。\n\n#### **主題四：多站台共享與備援發行架構（DM, BCP, 體育資訊 SAPI）**\n- **核心概念 / 理論定義：** 透過後台 API 共享與 Web 捷徑化，應對商店封號風險並降低開發成本。\n- **關鍵步驟與操作流程：**\n  - **DM 多站台架構：** 三個站台共用同一套 API，前端透過不同參數/C端配置呈現不同品牌介面（iOS 為全新輕量版，Android 為 DF 樣式）。\n  - **BCP 備援模式：** 因 App Store 帳號曾遭頻繁檢舉封號，現轉為 iOS 桌面捷徑（Web Shortcut）與 Android APK 下載模式。\n  - **體育資訊 (Sabasports API)：** 提供賽事數據、即時比分、傷停資訊與直播（Streaming），主要目標為保留流量並轉化用戶為會員。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n1. **馬甲包與 SDK 雙軌整合案例：**\n   - **實戰情境：** 客戶原先使用 Mobile 網頁版體驗不佳，且博弈功能無法直接上架官方商店。\n   - **解法與啟發：** 團隊為其打造無博弈關聯的 A 面成功上架 iOS/Android，同時提供 Module 跟 Package SDK 供其開發團隊直接整合至現有 APP，顯著提升操作流暢度。\n1. **Jioo live APP 世界盃賽事營運與儲值峰值案例：**\n   - **實戰情境：** 利用國際大型體育賽事（世界盃）帶動 C 端用戶活躍度與打賞儲值。\n   - **解法與啟發：** 在世界盃期間單月儲值金額達到 900 多美元（平時約 100-200 美元），證明將體育賽事數據結合主播社交打賞與虛擬競猜，能有效創造營運峰值。\n1. **BCP 商店帳號遭封應變案例：**\n   - **實戰情境：** BCP 早期上架 iOS 商店後遭受大量用戶檢舉與投訴，導致商店帳號被封。\n   - **解法與啟發：** 團隊快速切換營運策略，放棄商店硬上架，改採 iOS 桌面捷徑與 Android APK 模式運營，維持業務穩定。\n4. **跨產品線數據 Dashboard 自研案例：**\n   - **實戰情境：** 公司產品線眾多且數據分散在資料庫與 GA(Google Analysis) 事件中，官方 PowerBI/Tableau 未覆蓋全部需求。\n   - **解法與啟發：** 講者利用 AI 工具撰寫程式，自行將 DB 與 GA(Google Analysis)  事件數據整合至單一 Dashboard 中，實現跨產品線的動態即時監控。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動                      | 適用情境或對象                                      | 預期成效 / 注意事項                                               |\n| -------------------------------- | -------------------------------------------- | --------------------------------------------------------- |\n| **部署馬甲包 A/B 面審查機制**              | 欲將博弈相關功能上架至 App Store / Google Play 的產品線     | 可通過官方商店審查上架；需注意遭遇檢舉時仍有下架風險，需備妥替代方案                        |\n| **導入 Module 跟 Package (SDK) 整合** | 已擁有現成 APP 且希望升級用戶體驗的合作客戶                     | 提升原生操作流暢度，避免用戶跳出至外部網頁；須提供原生及跨平台（如 Flutter）開發包支援           |\n| **採行虛擬合規變現體系**                   | 預計直接上架官方商店的 B2C 體育直播/娛樂 APP（如 Jioo live APP） | 合規通過 Apple/Google 內購審查；下注僅限虛擬幣（Sin 幣）且**禁止提現**，競猜需包裝為遊戲風格 |\n| **建置 Web 捷徑與 APK 備用導流管道**        | 遭受商店封號或檢舉風險較高之站台（如 BCP）                      | 確保商店帳號遭封禁時用戶不流失；需強化前端 C 端跳轉與導流提示                          |\n| **利用 Sabasports API 體育數據進行會員轉化** | 體育資訊站與外部合作網頁（如五分網）                           | 透過賽事即時數據與直播保留用戶，並轉化為核心品牌會員                                |\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### **推薦工具與延伸資源：**\n- **Sabasports API：** 提供賽事數據、即時比分、傷停資訊與直播數據串接。\n- **培訓簡報檔案（PPT）：** 講師課後發布至內部溝通群組中。\n- **AI 自研數據儀表板 (Dashboard)：** 講師利用 AI 寫碼整合自建 DB 與 GA (Google Analytics) 事件數據的監控工具。\n\n#### **現場提問與解答精選：**\n1. **問：能否展示賽事下注/競猜在 APP 前台的實際介面？**\n   - **答：** 講師展示了前台介面，說明下注功能均包裝成類似「猜輸贏、猜大小」的遊戲化競猜風格，避免過於直接的博弈色彩以符合商店合規要求。\n2. **問：簡報中展示的 Dashboard（數據儀表板）是用什麼工具做的？資料來源是什麼？**\n   - **答：** 該 Dashboard 是講師自己利用 AI 寫程式開發的（非公司 PowerBI/Tableau），因為產品線較多且數據分散；資料來源整合了資料庫 (DB) 以及 GA 中的事件數據。\n"}, {"id": "doc-8", "filename": "8. Product Owner 作業流程 SOP - Genome.md", "title": "8. Product Owner 作業流程 SOP - Genome", "content": "---\ntitle: \"Product Owner 作業流程 SOP - Genome\"\nsource: \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2072543270/Product+Owner+SOP\"\nauthor:\npublished:\ncreated: 2026-09-19\ndescription:\ntags:\n  - \"clippings\"\n---\n## Product Owner 作業流程 SOP\n\n> **Proposal →Development → Go-Live → Maintenance → Incident**\n\nPO 的任務是 “做對的事，並讓整個團隊保持同步”\n\n## 1\\. 提案 Proposal（決定做什麼）\n\n### 🎯 目的\n\n建立完整的提案與分析，確保做的專案方向正確、可行、有意義。\n\n---\n\n### 📌 流程 Checklist\n\n1. Why / 專案目的\n2. 市場研究（競品 / 趨勢 / 痛點）\n3. TA（Target Audience）定義\n4. 撈取內部數據Support提案效果\n5. [Success Metrics（KPI）定義](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2066186309 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2066186309\")\n6. 商業可行性確認（Go / No-Go）\n7. 內部共識會議（TM / PD / UX / OP / Genome）\n8. Scope（or MVP）確認\n9. UX Flow & Wireframe\n10. 技術可行性評估（RD/PD）\n11. 合作團隊（RACI）確認\n12. 粗略時程預估\n13. 提案企劃書撰寫 [提案計劃表](https://docs.google.com/spreadsheets/d/1u6zhyNDKVnQ6e4OJUFOXzGR8xcMmmsNQHE2L2j455sQ/edit?gid=425509058#gid=425509058)\n14. 評審評分 [提案問卷](https://docs.google.com/forms/d/19isQdIkxnHFIUKO7BlcLjK2-_3G4EfTXDwDMdxkXOZ8/edit \"https://docs.google.com/forms/d/19isQdIkxnHFIUKO7BlcLjK2-_3G4EfTXDwDMdxkXOZ8/edit\") [提案問卷說明](https://ksg1cflx5ao2.sg.larksuite.com/docx/Lj8qd0Quco2NegxToOSlCm3lgif \"https://ksg1cflx5ao2.sg.larksuite.com/docx/Lj8qd0Quco2NegxToOSlCm3lgif\")\n15. 提案評分與 Backlog 優先級排序\n\n\\*如果過程有新增Bettype，請記得更新集團共用表單： [https://docs.google.com/spreadsheets/d/10YfDE3N03ZkCb5PRSzktTsTtfU\\_JDRew6D9er-ETHWM/edit?gid=1#gid=1](https://docs.google.com/spreadsheets/d/10YfDE3N03ZkCb5PRSzktTsTtfU_JDRew6D9er-ETHWM/edit?gid=1#gid=1) **35%** of your team sees Google Drive previews\n\nConnect\n\n---\n\n### 📄 產出物（Deliverables）\n\n<table><tbody><tr><th rowspan=\"1\" colspan=\"1\"><div><p><strong>文件</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>說明</strong></p><figure></figure></div></th></tr></tbody></table>\n\n<table><tbody><tr><th rowspan=\"1\" colspan=\"1\"><div><p><strong>文件</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>說明</strong></p><figure></figure></div></th></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>提案書 Proposal</p></td><td rowspan=\"1\" colspan=\"1\"><p>含 Why、Data、Scope、KPI、Feasibility、Timeline</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>RACI</p><p><strong>R</strong> esponsible (does the work)</p><p><strong>A</strong> ccountable (owns the outcome/approves)</p><p><strong>C</strong> onsulted (provides input/expertise)</p><p><strong>I</strong> nformed (kept up-to-date)</p></td><td rowspan=\"1\" colspan=\"1\"><p>責任與參與單位</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>粗略時程</p></td><td rowspan=\"1\" colspan=\"1\"><p>Story/Phase 級別的時間估算</p></td></tr></tbody></table>\n\n---\n\n## 2\\. 開發 Development（怎麼把東西做出來）\n\n### 🎯 目的\n\n確保設計、開發、測試均有完整脈絡並可追蹤。\n\n---\n\n### 📌 流程 Checklist\n\n#### Kickoff & 文件\n\n- Genome Internal Kickoff（PO/UX/UI）\n- 埋點追蹤規劃討論\n- 撰寫 Spec 文件\n- RD / PD Kickoff\n- Refinement（拆 Story/Task/AC等等…）\n- 技術風險評估\n- API 文件撰寫 並和TM確認內容。\n\n#### User Story / AC\n\n- Story 撰寫\n\t- **As a** \\<type of user>\n\t\t- **I want** \\<some goal>\n\t\t- **So that** \\<some business value>\n- AC撰寫\n\t- **Given** <前置條件>\n\t\t- **When** <行為>\n\t\t- **Then** <預期結果>\n- 各項目Story/Task時程確認\n\n#### 測試\n\n- 測試 Checklist\n\t- [Product Test Checklist](https://docs.google.com/spreadsheets/d/1h9dvUfYqvDPE4xoJdSWrnplVOpLBUwB1SwI7FcUl0xs/edit?usp=sharing \"https://docs.google.com/spreadsheets/d/1h9dvUfYqvDPE4xoJdSWrnplVOpLBUwB1SwI7FcUl0xs/edit?usp=sharing\") (PO UI UX)\n\t\t- [From QA Collective References](https://docs.google.com/spreadsheets/d/1qR2ZvufzlcXNMVYLwWq-kyIHAN-PV_FMXA95Gx8x9Dk/edit?usp=sharing \"https://docs.google.com/spreadsheets/d/1qR2ZvufzlcXNMVYLwWq-kyIHAN-PV_FMXA95Gx8x9Dk/edit?usp=sharing\") (參考)\n- PD對核心功Unit Test\n- 上UAT\n- QA測試 (大於Task等級)\n- AC 驗收\n- SBTest（客戶預上線測試）\n\n#### 上線前文件\n\n- 客戶整合文件\n- 客戶介紹文件\n- 上線時間同步（PD / Genome / AM / TM / CSD）\n\n---\n\n### 📄 產出物（Deliverables）\n\n<table><tbody><tr><th rowspan=\"1\" colspan=\"1\"><div><p><strong>文件</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>說明</strong></p><figure></figure></div></th></tr></tbody></table>\n\n<table><tbody><tr><th rowspan=\"1\" colspan=\"1\"><div><p><strong>文件</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>說明</strong></p><figure></figure></div></th></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Spec</p></td><td rowspan=\"1\" colspan=\"1\"><p>開發的唯一依據文件</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>API 文件</p></td><td rowspan=\"1\" colspan=\"1\"><p>給客戶與前/後端串接</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Story + AC</p></td><td rowspan=\"1\" colspan=\"1\"><p>開發與 QA 的工作基準</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>測試清單</p></td><td rowspan=\"1\" colspan=\"1\"><p>UAT 依據</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>上線文件</p></td><td rowspan=\"1\" colspan=\"1\"><p>給客戶的整合與操作指南</p></td></tr></tbody></table>\n\n---\n\n## 3\\. 上線 Go-Live（成功把產品推上線）\n\n### 🎯 目的\n\n順利上線並確保產品穩定性。\n\n---\n\n### 📌 流程 Checklist\n\n1. 上線說明會（AM/TM/CSD/Stakeholder）\n2. 上線後數據監控（Active Player / BetCount / TO / Margin）\n\n---\n\n### 📄 產出物（Deliverables）\n\n- 上線簡報\n- 監控報表（Looker / BiWeekly Backlog meeting）\n\n---\n\n## 4\\. 維運 Maintenance（讓產品越來越好）\n\n### 📌 流程 Checklist\n\n1. 迭代優化（Based on Success Metrics KPIs & Feedback）\n2. 數據整理（使用率、成效、達成率）\n\n---\n\n### 📄 產出物（Deliverables）\n\n- 雙週成效報告\n- 必要時的優化提案 (除非是Task，不然會回到Proposal Phase重新排序)\n\n---\n\n## 5\\. 事故 Incident（出問題時怎麼處理）\n\n### 📌 流程 Checklist\n\n1. Let’s Talk or Slack or any tools即時同步所有資訊給StakeHolders\n2. 評估影響範圍（多少玩家 / 金額 / 功能）\n3. 是否需要 UM (如無法下決策，直接Call TL/AM/DM/GM一路往上，找出Decision Maker)\n4. 技術團隊查找問題原因\n5. 問題修復\n6. 確認實際影響（票、帳務…）並回報 TM\n7. Refund/Void/修票、修資料\n8. 事後處理 (IM/StepReport...etc.)\n9. 持續追蹤問題是否復發\n10. 建立改善監控點（避免再發生）\n\n---\n\n### 📄 產出物（Deliverables）\n\n- IM\n- StepReport\n- 改善計畫（Monitoring / Alerting）\n"}, {"id": "doc-9", "filename": "8.1 PO Success Metrics 成功指標.md", "title": "8.1 PO Success Metrics 成功指標", "content": "---\ntitle: Success Metrics 成功指標 - Genome\nsource: https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2066186309/Success+Metrics\nauthor:\npublished:\ncreated: 2026-09-21\ndescription:\ntags:\n  - clippings\n---\n## Success Metrics\n\n## 📊 Success Metrics Documentation Overview\n\n### 1\\. Introduction & Value Creation Overview (English)\n\n- **Purpose:** Explains the core thinking behind success metrics for product teams.\n- **Key Points:**\n\t- Success metrics validate if a project achieved its objective (focus on outcomes, not just activity).\n\t\t- Avoids common misuses (e.g., using MAU as a default metric).\n\t\t- Stresses the importance of distinguishing real value creation from value redistribution/cannibalization.\n\t\t- Emphasizes aligning metrics with the correct product pillar (Acquisition, Engagement, Retention, Monetization, Market Expansion, Brand/Product Quality).\n\t\t- Introduces “New Market Utilization” as a diagnostic metric for incremental value.\n- **Link:** [Introduction & Value Creation Overview](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132377659 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132377659\")\n\n---\n\n### 1\\. 成功指標導論與價值創造觀念說明 (Traditional Chinese)\n\n- **目的:** 說明產品成功指標的核心思維與判斷方式。\n- **重點摘要:**\n\t- 成功指標用於驗證專案是否真正達成目標（強調結果而非行為）。\n\t\t- 避免常見誤用（如濫用 MAU）。\n\t\t- 強調分辨「真正創造價值」與「價值轉移／蠶食」的重要性。\n\t\t- 成功指標需對齊正確的產品支柱（獲客、參與、留存、變現、市場擴展、品牌/產品品質）。\n\t\t- “New Market Utilization” 是用來診斷增量價值的指標。\n- **連結:** [成功指標導論與價值創造觀念說明](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132574276 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132574276\")\n\n---\n\n### 2\\. Success Metrics Guidelines (English)\n\n- **Purpose:** Defines the standard approach for setting, tracking, and reviewing success metrics for all product initiatives.\n- **Key Points:**\n\t- Every project must state its primary product pillar and objective.\n\t\t- Select 1–3 success metrics per project, directly reflecting the objective.\n\t\t- Define projected targets and baselines using historical or comparable data.\n\t\t- All metrics must be trackable; if not, tracking becomes a delivery requirement.\n\t\t- Six-month post-delivery tracking period for all projects.\n\t\t- Clear ownership and accountability for metric tracking and iteration.\n\t\t- Post-tracking review determines whether to continue, pivot, or stop investment.\n- **Link:** [Success Metrics Guidelines](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106\")\n\n---\n\n### 2\\. 產品成功指標指引 (Traditional Chinese)\n\n- **目的:** 定義所有產品專案設定、追蹤與檢討成功指標的標準流程。\n- **重點摘要:**\n\t- 每個專案需明確定義主要產品支柱與目標。\n\t\t- 每案選定 1–3 個成功指標，直接反映目標達成狀況。\n\t\t- 需設定預期目標與基準線，並以歷史或可比資料為依據。\n\t\t- 所有指標必須可追蹤，否則需納入交付需求。\n\t\t- 專案交付後進行 6 個月追蹤，並有明確負責人。\n\t\t- 追蹤期後依成效決定是否持續、調整或終止投資。\n- **連結:** [產品成功指標指引](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106\")\n\n---\n\n## 🗂️ Quick Links to All Documents\n\n1. [Introduction & Value Creation Overview (EN)](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132377659 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132377659\")\n2. [成功指標導論與價值創造觀念說明 (ZH)](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132574276 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132574276\")\n3. [Success Metrics Guidelines (EN)](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106\")\n4. [產品成功指標指引 (ZH)](https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106 \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2113667106\")\n\n---"}, {"id": "doc-10", "filename": "8.2 成功指標導論與價值創造觀念說明.md", "title": "8.2 成功指標導論與價值創造觀念說明", "content": "---\ntitle: 成功指標導論與價值創造觀念說明 - Genome\nsource: https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132574276\nauthor:\npublished:\ncreated: 2026-09-21\ndescription:\ntags:\n  - clippings\n---\n## 成功指標導論與價值創造觀念說明 Success Metrics\n\n## 文件目的\n\n本文件用於說明 **產品成功指標（Success Metrics）的核心思維與判斷方式** 。\n\n目的在於協助產品負責人（PO）：\n\n- 正確理解成功指標存在的意義\n- 避免常見誤用（例如濫用 MAU）\n- 分辨「真正創造價值」與「價值轉移／蠶食」\n- 在套用正式的《產品成功指標指引（Guidelines）》之前，先建立正確心智模型\n\n> 本文件說明的是「為什麼（Why）」。  \n> 《成功指標指引》定義的是「怎麼做（How）」。\n\n---\n\n## 第一部分｜成功指標導論\n\n### 1\\. 什麼是成功指標（以及它不是什麼）\n\n**成功指標的存在，是為了驗證一個專案是否真正達成其目標。**\n\n成功指標是：\n\n- 用來衡量「結果（Outcome）」的工具，而非行為或產出\n- 用於學習、優化與決策的依據\n- 判斷是否應該 **持續投入、轉向或停止投資** 的基礎\n\n成功指標不是：\n\n- 所有有變化的數據集合\n- 預設的商業 KPI 清單\n- 專案上線後用來合理化成果的工具\n\n> 專案交付 ≠ 專案成功\n\nTurnover、Margin、Bet Count 等商業數據 **一定會被追蹤** ，  \n但它們 **不一定是該專案的成功指標** ，需視專案目的而定。\n\n---\n\n### 2\\. Licensee 啟用 ≠ 用戶價值\n\n一個常見誤解是：  \n將 **Licensee 啟用新產品** 視為專案成功。\n\n實際上：\n\n- 多數 Licensee 會在產品上線後自然啟用\n- 啟用本身 **不代表** ：\n\t- 有新增用戶\n\t\t- MAU 成長\n\t\t- 自然需求被創造\n\t\t- 用戶發現了新的產品類別\n\n因此：\n\n- **除非專案本質是 Acquisition（獲客）**\n- 否則 **不應將 MAU 作為成功指標**\n\n對於 Monetization、Engagement、Market Expansion 等專案而言，  \nMAU 往往是誤導性的。\n\n> 啟用是營運行為，  \n> 成功是用戶行為。\n\n---\n\n### 3\\. 成功指標必須對齊產品支柱\n\n每一個專案都必須先確認 **一個主要產品支柱** ：\n\n- Acquisition\n- Engagement\n- Retention\n- Monetization\n- Market Expansion\n- **Brand, UI & UX**\n\n成功指標必須：\n\n- 來自 **相同的產品支柱**\n- 反映產品能夠 **直接影響的使用者行為**\n\n範例：\n\n- Betby E-Soccer iFrame\n\t- 主要支柱： **Monetization**\n\t\t- MAU 屬於 Acquisition → **不適合**\n\t\t- 合適的指標包括：\n\t\t- Turnover 提升\n\t\t\t\t- Bet Count 成長\n\t\t\t\t- 市場深度使用率\n\n> 使用錯誤支柱的 KPI，會導致錯誤的結論。\n\n---\n\n## 第二部分｜價值創造 vs 價值蠶食\n\n### 4\\. 每一個新產品都必須回答的核心問題\n\n當一個新產品表現不錯時，真正需要問的是：\n\n> 這個產品是在 **創造新價值** ，  \n> 還是只是在 **重新分配既有價值** ？\n\n不是所有成長都代表真正的成長。\n\n表面上的提升，可能來自：\n\n- 用戶從產品 A 轉移到產品 B\n- 原本的投注量被重新分流\n- 用戶投注方式改變，但總價值未增加\n\n理解這一點，對以下事項至關重要：\n\n- 成功指標選擇\n- 產品組合決策\n- 長期產品策略\n\n---\n\n### 5\\. 正確認識「蠶食（Cannibalization）」\n\n**蠶食本身不是錯誤。**\n\n在以下情況下，蠶食是可以接受，甚至是正面的：\n\n- 產品替換是策略上刻意的選擇\n- 新產品提供更好的 UX、速度或穩定性\n- 用戶行為品質提升\n- 整體產品組合變得更健康\n\n蠶食是問題，當：\n\n- 多個產品競爭同一行為\n- 沒有解鎖任何新行為\n- 整體價值持平或下降\n\n> 關鍵不是避免蠶食，  \n> 而是 **是否清楚理解並刻意選擇** 。\n\n---\n\n### 6\\. New Market Utilization 真正衡量的是什麼\n\n**New Market Utilization** 的存在，是為了回答一個非常明確的問題：\n\n> 這個新產品，是否解鎖了「以前不存在的投注行為」？\n\n它衡量的是：\n\n- 用戶是否在 **現有產品未提供的市場類型** 上下注\n- 新產品是否帶來 **增量行為** ，而非單純替代\n\n簡單來說：\n\n- 若用戶投注的是「只有新產品才有的市場」  \n\t→ 價值較可能是新增\n- 若只是把既有投注移到新 UI  \n\t→ 價值多半只是轉移\n\n---\n\n### 7\\. 真正創造價值的實際例子\n\n**過去不存在的新市場類型：**\n\n- Player Props（球員表現）\n- First Goal Scorer（首名射手）\n- Goal Range（進球區間）\n- Combo Bets（組合投注）\n- Alternate Handicap Lines（不同盤口讓分）\n\n**既有市場的深度擴展：**\n\n- 擴展型 Correct Score\n- Alternate Total Goals\n- 更完整的市場樹結構\n\n當用戶實際投注這些市場時：\n\n- 新行為被創造\n- Turnover 更可能是增量\n- 蠶食風險相對降低\n\n---\n\n### 8\\. New Market Utilization 如何作為成功指標使用\n\nNew Market Utilization：\n\n- 主要適用於 **Monetization** 與 **Market Expansion** 類型專案\n- 通常作為 **1–3 個成功指標中的其中一個**\n- 於 **6 個月成效追蹤期間** 內觀察\n\n它必須搭配以下數據一起解讀：\n\n- Turnover\n- Bet Count\n- Margin\n\n> 它用來說明「價值從哪裡來」，  \n> 而不是單獨回答「價值有多少」。\n\n---\n\n### 9\\. New Market Utilization 不是什麼\n\n為避免誤用，需明確說明：\n\nNew Market Utilization **不是** ：\n\n- 獲客成功的證明\n- MAU 成長的證明\n- Licensee 成功的證明\n- 單獨用來判斷留存的指標\n\n它是一個 **診斷型指標** ，而非展示型指標。\n\n---\n\n## 結語｜核心觀點\n\n成功指標的目的，不是讓專案看起來成功，  \n而是 **誠實反映實際影響** 。\n\n在設定任何 KPI 之前，必須先理解：\n\n- 專案真正的意圖\n- 所屬產品支柱\n- 是創造新價值，還是轉移既有價值\n\n本文件建立的是 **共同的思考框架** 。  \n正式的執行方式，請依《產品成功指標指引》。"}, {"id": "doc-11", "filename": "8.3 產品成功指標指引.md", "title": "8.3 產品成功指標指引", "content": "---\ntitle: \"產品成功指標指引 - Genome\"\nsource: \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2132508740\"\nauthor:\npublished:\ncreated: 2026-09-21\ndescription:\ntags:\n  - \"clippings\"\n---\n## 產品成功指標指引 Success Metrics\n\n## 目的\n\n本指引用於建立 **產品專案成功指標的標準做法** ，適用於所有產品相關專案。\n\n成功指標的目的在於：\n\n- 對齊團隊對「成功」的共識\n- 以數據進行客觀檢視\n- 支援後續「優化、轉向或停止投資」的決策\n\n---\n\n## 1\\. 先定義產品支柱與專案目標\n\n每一個專案必須清楚定義：\n\n- **主要產品支柱（Primary Product Pillar）**  \n\t（Acquisition、Engagement、Monetization、Retention、Brand、Market Expansion）\n- **次要產品支柱** （如適用）\n- **專案目標（Objective）**  \n\t→ 本專案希望改變的使用者行為或產出結果是什麼？\n\n成功指標必須 **對齊主要產品支柱與專案目標** 。  \n成功指標 **不一定是營收或 Turnover** ，但商業數據仍須於上線後持續追蹤。\n\n---\n\n## 2\\. 成功指標設定（僅限 1–3 個 KPI）\n\n- 每個專案必須設定 **1–3 個成功指標**\n- 指標需依 **專案性質個別決定** ，考量：\n\n注意事項：\n\n- 避免 KPI 過多，造成焦點分散\n- 成功指標需能直接反映「專案是否成功」\n\n---\n\n## 3\\. 盡可能設定預期成果（Projected Targets）\n\n- 在可行的情況下，需設定 **預期成功數值**\n- 預期數值可依據：\n\t- 歷史數據\n\t- 類似產品或功能表現\n\t- 相同或相近的聯賽、賽事、市場\n\n範例：  \nVirtual Soccer（VS1 & VS2）  \n→ 預期 Turnover：MYR 100M\n\n預期數值的目的在於 **對齊期望與方向** ，即使後續可調整。\n\n---\n\n## 4\\. Baseline（基準值）定義\n\n- 預設 Baseline 為 **月平均數據**\n- 標準作法為使用 **過去 12 個月平均**\n- 若存在明顯季節性：\n\t- 必須採用 **同類型賽事／聯賽的對比**\n\t\t- EPL → 使用 EPL 歷史數據\n\t\t- 世界盃 → 使用世界盃或 Euro 類似賽事數據\n\nBaseline 必須反映 **相同使用情境與投注意圖** 。\n\n---\n\n## 5\\. 數據可追蹤性為必要條件\n\n- 所有成功指標必須 **可被追蹤**\n- 若目前無法取得數據：\n\t- 必須將數據追蹤列為 **專案交付需求**\n- 除成功指標外，以下標準數據應於適用情況下同步觀察：\n\t- Turnover\n\t- Margin\n\t- 使用率／採用率\n\t- 錯誤率或 Incident（如適用）\n\n若無法量測，該指標不可作為成功指標。\n\n---\n\n## 6\\. 成效追蹤期間（6 個月）\n\n- 所有專案於上線後，皆需進入 **6 個月的成效追蹤期**\n- 追蹤期間內：\n\t- 持續觀察成功指標\n\t- 同步檢視相關支援數據（Turnover、Margin 等）\n\n此期間用於觀察採用、行為變化與穩定性。\n\n---\n\n## 7\\. 專案負責人與責任歸屬\n\n- 每個專案必須指定 **明確的負責人（Owner）**\n- 負責人需承擔以下責任：\n\t- 確保成功指標被正確追蹤\n\t- 定期檢視成效趨勢\n\t- 從數據中提出洞察\n\t- 上線後提出優化或調整建議\n\n專案交付並不代表責任結束。\n\n---\n\n## 8\\. 追蹤期間內的優化與調整\n\n- 若成效趨勢顯示可能未達標：\n\t- 負責人需提出優化或調整方案\n- 是否執行調整，視以下條件而定：\n\t- Backlog 優先順序\n\t- 資源可用性\n\t- 專案策略重要性\n\n在 6 個月追蹤期間內進行調整屬正常且鼓勵的行為。\n\n---\n\n## 9\\. 追蹤期後的決策機制\n\n6 個月追蹤期結束後：\n\n- **成功指標達標或呈正向趨勢**  \n\t→ 持續投入、擴大或優化\n- **成功指標持續未達**  \n\t→ 回顧原始目標，決定是否：\n\n並非所有專案都必須成功， **適時止損是成熟的產品決策** 。\n\n---\n\n## 核心原則\n\n- 指標服務於目標，而非習慣\n- KPI 越少，焦點越清楚\n- 上線 ≠ 成功\n- 數據責任不可轉嫁\n- 每個專案都必須持續證明其價值"}, {"id": "doc-12", "filename": "8.5 報表指標定義 with BI team.md", "title": "8.5 報表指標定義 with BI team", "content": "---\ntitle: 報表指標定義 - Business Intelligence\nsource: https://onetw.atlassian.net/wiki/spaces/BI/pages/790364162\nauthor:\npublished:\ncreated: 2026-09-19\ndescription:\ntags:\n  - clippings\n---\n## 報表指標定義\n\n前言：\n\nBI的業務都跟數據有關，提需求的人、出資料的人、看報表的人，彼此溝通之間容易因為對數據的認知不清楚，導致溝通時產生誤會。寫這份文件目的是讓各單位與BI Team溝通時，能有個統一的參照表，釐清各項名詞、指標定義，定義很重要，搞清楚定義才能確保東西做出來是對的。\n\n少部分專有名詞可能在不同情境有不同意思(ex: Active Member)，但是在大部分情況下，預設都以用這份文件為依據。\n\n## 常用指標定義(Keyindex)\n\n- 所有金額以馬幣呈現\n- Company 與 House 都表示公司視角，只是說法習慣不同，這類數據已乘上抽成比例\n- 計算公式的欄位請參考 bettrans [欄位說明](https://onetw.atlassian.net/wiki/spaces/BI/pages/790364162#Bettrans-%E6%B3%A8%E5%96%AE%E8%A1%A8%E9%87%8D%E8%A6%81%E6%AC%84%E4%BD%8D \"https://onetw.atlassian.net/wiki/spaces/BI/pages/790364162#Bettrans-%E6%B3%A8%E5%96%AE%E8%A1%A8%E9%87%8D%E8%A6%81%E6%AC%84%E4%BD%8D\")\n- 有些時候需求方要 NoDraw 的數據，表示排除平手的票（ticket statusid = 111）\n\n<table><colgroup><col> <col> <col> <col></colgroup><tbody><tr><th rowspan=\"1\" colspan=\"1\"><div><p><strong>指標</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>視角</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>定義</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>計算公式</strong></p><figure></figure></div></th></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Bet Count<br>注單數量 / 下票數</p></td><td rowspan=\"1\" colspan=\"1\"></td><td rowspan=\"1\" colspan=\"1\"><p>注單數</p></td><td rowspan=\"1\" colspan=\"1\"><p>COUNT(DISTINCT transid)</p></td></tr><tr><td rowspan=\"2\" colspan=\"1\"><p>Turnover<br>投注額 / 流水</p></td><td rowspan=\"1\" colspan=\"1\"><p>Member Turnover</p></td><td rowspan=\"1\" colspan=\"1\"><p>玩家視角的投注額</p></td><td rowspan=\"1\" colspan=\"1\"><p>stake * actualrate</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Company Real Turnover</p></td><td rowspan=\"1\" colspan=\"1\"><p>公司視角，扣掉抽成後的下注總額</p></td><td rowspan=\"1\" colspan=\"1\"><p>stake * actualrate * ( 1 - tpositiontaking <sub>抽成</sub>)</p></td></tr><tr><td rowspan=\"2\" colspan=\"1\"><p>Winlost<br>輸贏金額 (不含本金)</p></td><td rowspan=\"1\" colspan=\"1\"><p>Member Winlost</p></td><td rowspan=\"1\" colspan=\"1\"><p>玩家視角的輸贏金額</p></td><td rowspan=\"1\" colspan=\"1\"><p>(winlost - actual_stake) * actualrate</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Company Real Income</p></td><td rowspan=\"1\" colspan=\"1\"><p>公司視角賺的錢，相當於傭金 + 玩家輸掉的*抽成</p></td><td rowspan=\"1\" colspan=\"1\"><p>(scomm * actualrate) + (actual_stake - winlost) * actualrate * ( 1 - tpositiontaking <sub>抽成</sub>)</p></td></tr><tr><td rowspan=\"2\" colspan=\"1\"><p>Margin<br>獲利率 / 殺率 / 殺數</p></td><td rowspan=\"1\" colspan=\"1\"><p>Member Margin</p></td><td rowspan=\"1\" colspan=\"1\"><p>玩家視角的獲利率 / 會員殺率</p></td><td rowspan=\"1\" colspan=\"1\"><p>(Member Winlost / Member Turnover) * 100</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Company Margin</p></td><td rowspan=\"1\" colspan=\"1\"><p>公司視角的獲利率</p></td><td rowspan=\"1\" colspan=\"1\"><p>(Company Real Income / Company Real Turnover) * 100</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Active Member<br>活躍人數</p></td><td rowspan=\"1\" colspan=\"1\"></td><td rowspan=\"1\" colspan=\"1\"><p>有下票的玩家數</p></td><td rowspan=\"1\" colspan=\"1\"><p>COUNT(DISTINCT custid)</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p><mark>Conversion</mark><br>轉換率</p></td><td rowspan=\"1\" colspan=\"1\"></td><td rowspan=\"1\" colspan=\"1\"><p>月轉換率：當月登入玩家中，有下票的玩家比例</p></td><td rowspan=\"1\" colspan=\"1\"><p><code>下票玩家數 / 登入玩家數</code></p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>Retention<br>留存率</p></td><td rowspan=\"1\" colspan=\"1\"></td><td rowspan=\"1\" colspan=\"1\"><p>月留存率：前月下票的玩家中，本月也來下票的比例</p></td><td rowspan=\"1\" colspan=\"1\"><p><code>前月&本月下票 / 前月下票</code></p></td></tr></tbody></table>\n\n以上是BI業務常使用的指標，需求訪談時雙方應該一起核對，避免交付錯誤的成果。\n\nQ：如果遇到某份報告/Dashboard，需求單位希望調整定義/公式，或希望添加新的指標該怎麼辦？\n\nA：直接請需求方提供定義與公式，與BI確認規則後，依照需求規格做計算。\n\n---"}, {"id": "doc-13", "filename": "8.6 產品開發流程.md", "title": "8.6 產品開發流程", "content": "---\ntitle: \"產品開發流程 - Genome\"\nsource: \"https://onetw.atlassian.net/wiki/spaces/NFPO/pages/2510946308\"\nauthor:\npublished:\ncreated: 2026-10-01\ndescription:\ntags:\n  - \"clippings\"\n---\n## 產品開發流程\n\n**Checklist**\n\n## 開單給各部門\nNFPO 開單：需求背景，改動範圍，SPEC，上線時間\nUX 開單\nUI 開單\nWspace / Neuron 開單\n\n## UX/UI 設計階段\n確認 UX/UI 預計完成時間\n確認 UX/UI 文件沒問題，符合 SPEC\n翻譯多語系 & 提供給外籍同仁確認\n建立 resource\nAC 清單準備\n\n## Wspace 開發階段\n影響平台；Galaxy/Mars / Standard / 2.0 / Jupiter / CV\n確認影響範圍有哪些；Odds Page / Single Match / Bet Slip / Statement / Result Popup / Result\n開關；推廣開關 & 產品開關\n下線開關\n埋點\nR&R\n\n## Neuron 開發階段\nMAPI / SWAPI 調整\nLIC central 新增產品開關 → 需要產品 site config key\nLAP 報表顯示 → 需要等 SX 完成\n\n## 產品待上線\n\n<table><colgroup><col> <col> <col> <col></colgroup><tbody><tr><th rowspan=\"1\" colspan=\"1\"><div><p><strong>No</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>Items</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>Check</strong></p><figure></figure></div></th><th rowspan=\"1\" colspan=\"1\"><div><p><strong>Remarks</strong></p><figure></figure></div></th></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>1</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[介紹簡報]</strong></p><p>提供簡報給 PO 確認</p></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"><ul><li><p>英文/中文都要</p></li><li><p>截圖也許要跟著語系</p></li></ul></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>2</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[介紹簡報]</strong></p><p>提供簡報給 TM 確認</p></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"><ul><li><p>至少 sbtest 前4-5天就要提供</p></li><li><p>包含後台/LAP 相關文件)</p></li></ul></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>3</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[TM 測試]</strong></p><ol><li><p>TM 內部測試 & 理解產品</p></li><li><p>請 DA 教學怎麼開測試比賽 (如果有特定設定的話)</p></li></ol></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>4</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[TM 發通知給客戶]</strong></p><p>TM 測完沒問題就提供給客戶測試</p></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>5</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[SBTEST 前一天/當天]</strong></p><ol><li><p>整理相關 siteconfig key 給 TM</p></li><li><p>確認 sbtest 當天會有測試比賽</p></li></ol></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>6</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[SBTEST 當天]</strong></p><p>TM 調整完 → 通知 PO / 相關單位</p></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>7</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[客戶測試階段]</strong></p><p>回答問題 / 修正 bug</p></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>8</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[GO-LIVE 前一個禮拜 / 前幾天]</strong></p><p>約 AM/TM/CSD 做產品介紹說明</p></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"><ul><li><p>開完會就提供文件給 AM/CSD</p></li></ul></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>9</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[IT Release 前一天]</strong></p><p>發通知 email</p><div>Open image-20260115-101947.png <img src=\"https://media-cdn.atlassian.com/file/19e5e2da-b721-49de-85ee-9639310716b5/image/cdn?allowAnimated=true&client=bafee0c7-c4ae-477b-85a1-1fca126f35e6&collection=contentId-2510946308&height=125&max-age=2592000&mode=full-fit&source=mediaCard&token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiYWZlZTBjNy1jNGFlLTQ3N2ItODVhMS0xZmNhMTI2ZjM1ZTYiLCJhY2Nlc3MiOnsidXJuOmZpbGVzdG9yZTpjb2xsZWN0aW9uOmNvbnRlbnRJZC0yNTEwOTQ2MzA4IjpbInJlYWQiXX0sImV4cCI6MTc5MDgzMzg4NiwibmJmIjoxNzkwODMxMDA2LCJhYUlkIjoiNzEyMDIwOjE1ZTQzOTQ3LTUwZWQtNDQwNi05Njg2LTc3OWQxYzdmZWU5NyIsImh0dHBzOi8vaWQuYXRsYXNzaWFuLmNvbS9hcHBBY2NyZWRpdGVkIjpmYWxzZSwiYXV0aFR5cGUiOiJzZXNzaW9uIn0.gLw2ifnzkOChW639FYL3JWPD9hQQOKx2N6FpQfLpQc4&width=401#media-blob-url=true&id=19e5e2da-b721-49de-85ee-9639310716b5&clientId=bafee0c7-c4ae-477b-85a1-1fca126f35e6&contextId=contentId-2510946308&collection=contentId-2510946308\"></div></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"><p><strong>Email:</strong></p>\nCSD\ncsoneonone@enpine.com\ncsoneonone@gmail.com\n\nTM\nlicenseetm@nextfortune.tw\n\nAM\nlicensing@onelab.tw\nlicensing@bopingholdings.com\n\nCC :\nGenome\ngenome_invision@nextfortune.tw\nlicenseepm@nextfortune.tw\n\nCredit\nsteve.liao@onelab.tw\n\nGM/VM\neddie.wu@nextfortune.tw\nchester.fang@nextfortune.tw\n\nNOC\nhyjay.noc@hyjay.com\n\n<tr><td rowspan=\"1\" colspan=\"1\"><p>10</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[Go-Live 前一天]</strong></p><p>發通知 email</p><div>Open image-20260120-093625.png <img src=\"https://media-cdn.atlassian.com/file/b1445346-a6f7-45cb-9f38-c863f2b5d25a/image/cdn?allowAnimated=true&client=bafee0c7-c4ae-477b-85a1-1fca126f35e6&collection=contentId-2510946308&height=125&max-age=2592000&mode=full-fit&source=mediaCard&token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiYWZlZTBjNy1jNGFlLTQ3N2ItODVhMS0xZmNhMTI2ZjM1ZTYiLCJhY2Nlc3MiOnsidXJuOmZpbGVzdG9yZTpjb2xsZWN0aW9uOmNvbnRlbnRJZC0yNTEwOTQ2MzA4IjpbInJlYWQiXX0sImV4cCI6MTc5MDgzMzg4NiwibmJmIjoxNzkwODMxMDA2LCJhYUlkIjoiNzEyMDIwOjE1ZTQzOTQ3LTUwZWQtNDQwNi05Njg2LTc3OWQxYzdmZWU5NyIsImh0dHBzOi8vaWQuYXRsYXNzaWFuLmNvbS9hcHBBY2NyZWRpdGVkIjpmYWxzZSwiYXV0aFR5cGUiOiJzZXNzaW9uIn0.gLw2ifnzkOChW639FYL3JWPD9hQQOKx2N6FpQfLpQc4&width=401#media-blob-url=true&id=b1445346-a6f7-45cb-9f38-c863f2b5d25a&clientId=bafee0c7-c4ae-477b-85a1-1fca126f35e6&contextId=contentId-2510946308&collection=contentId-2510946308\"></div></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"><p>同上</p></td></tr><tr><td rowspan=\"1\" colspan=\"1\"><p>11</p></td><td rowspan=\"1\" colspan=\"1\"><p><strong>[Go-Live 當天]</strong></p><p>Reply email:</p><blockquote><p>Dear All,</p><p>Please be informed that <strong>[Product Name]</strong> <strong>have already released to production</strong></p><p>Best Regards,</p><p>XXX</p></blockquote></td><td rowspan=\"1\" colspan=\"1\"><input></td><td rowspan=\"1\" colspan=\"1\"><p>同上</p><ul><li><p>上完 code 檢查沒問題就通知到群組</p></li></ul></td></tr></tbody></table>\n"}, {"id": "doc-14", "filename": "9.1 Sportsbook生態系 by BI Ruby.md", "title": "9.1 Sportsbook生態系 by BI Ruby", "content": "20260922\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n\n- 本次培訓旨在全面剖析體育博彩（Sportsbook）產業生態系，涵蓋從最上游全球體育賽事、數據服務商、博彩平台開發商（Sportsbook）、營運商（Licensee）、代理至最下游玩家與套利客的完整架構與商業模式。\n- 講者結合自身近 20 年的跨崗位實戰經驗，深入解析玩家心理（亞洲與歐美玩家行為差異）、操盤風控邏輯、套利團隊運作手法，以及博彩平台的核心競爭優勢與關鍵營運指標。\n- 培訓特別強調體育博彩產業作為全球體育發展最大資金推手的重要性，並展示公司在合法合規前提下，透過虛擬體育（Virtual Sports）等產品創新展現企業韌性，以及重視員工知識價值的企業文化。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### 主題一：Sportsbook 產業上中下游生態系與營運模式\n\n- **核心概念 / 理論定義**：\n    - **六大層級生態鏈**：L01 全球體育賽事 \\(\\rightarrow\\) L02 數據服務商（Data Provider）\\(\\rightarrow\\) L03 體育博彩平台／遊戲開發商（Sportsbook/SBook）\\(\\rightarrow\\) L04 營運商（Licensee/Operator）\\(\\rightarrow\\) L05 代理（Agent）\\(\\rightarrow\\) L06 玩家與套利客。\n    - **體育發展推手**：博彩產業是推動全球體育發展的最大資金來源（例如英超聯賽有 55% 的贊助商來自博彩產業）。\n- **關鍵步驟、模型或操作方法**：\n    - **數據流轉與分潤鏈**：\n        1. **賽事數據採購**：L03 平台商向 L02 數據服務商（如 Sportradar 等）購買賽事數據、直播與賽果，每年費用約 1,500萬～2,000 萬元人民幣。\n        2. **B2B 抽成模式**：L03 平台商（如沙巴）將數據包裝為玩法、賠率與風控服務，每月向 L04 營運商抽取玩家淨盈餘（GGR）的 **8%**。\n        3. **營運商推廣與金流**：L04 營運商打造前端 APP/網站，承擔行銷推廣與金流成本（金流渠道費率約 1.5% - 3.5%）。\n        4. **代理分紅機制**：L05 代理透過發展下線獲取返傭（最高可達 60%）或退水。\n    - **現金網（Cash） vs 信用網（Credit）模式對比**：\n        - **Cash（現金網）**：玩家需先儲值才能下注（類似悠遊卡），莊家與平台風險低，為產業發展主流。\n        - **Credit（信用網）**：給予玩家固定額度（每日重置）、定期結算對帳（類似信用卡），適合吸引資金龐大不願頻繁儲值的大客，但承擔雙向跑帳風險。\n- **講者強調的重要觀念或常見誤區**：\n    - **誤區：自研 Sportsbook 的門檻低**。體育博彩是所有博弈類別（體育、真人、電子、彩票、棋牌）中複雜度最高者，需持續維護動態賽事與球隊數據，許多嘗試自研的營運商皆以倒閉告終。\n    - **營運商命脈**：金流渠道是營運商的命脈，安全穩定的支付通道（三方、四方、五方支付）雖費用較高，但能避免資金遭凍結風險。\n\n#### 主題二：玩家心理學與博彩平台吸引力要素\n\n- **核心概念 / 理論定義**：\n    - **玩家文化差異**：亞洲玩家多屬於「Bet for Win」（為了贏錢與成就感而投注，研究深入且壓力大）；歐美玩家則多為「Bet for Fun」（娛樂性質，控管風險內的看球參與感）。\n- **關鍵步驟、模型或操作方法**：\n    - **營運商（Licensee）吸引玩家的關鍵框架**：\n        1. **產品多元性**：必須包含體育、真人百家樂、電子、彩票、棋牌五大基本盤，並加入電競與區塊鏈遊戲，提升玩家黏著度。\n        2. **誘人活動**：首充優惠（如充 1000 送 1000）、退水（Cash 約 0.1%，Credit 約 1.5%）、救援金與 VIP 專屬權益。\n        3. **品牌公信力**：擁有合法國際牌照、知名球隊贊助、極速出金（如承諾 5 分鐘內到帳）與良好論壇評價。\n    - **玩家選擇 Sportsbook 平台的四大指標**：\n        - **專業度**：隊名與賽事資訊絕對不可錯，否則引發錯單與錢包扣款爭議。\n        - **全球化**：覆蓋 24 個時區的大小型賽事，避免玩家登入時無賽事可投。\n        - **高賠率**：提供高於市場平均的賠率。\n        - **操作與派彩體驗**：極簡化下注流程（1-2 個動作），且賽事結束後極速派彩以便玩家繼續下注。\n- **講者強調的重要觀念或常見誤區**：\n    - **殺豬盤（黑網）辨識與立場**：黑網常利用假明星代言（如 P 圖古天樂）、過度高額優惠（如充 1000 送 3000）吸引玩家，大額出金時百般刁難。講者強調公司立場堅決，凡發現客戶為殺豬盤一律立即終止合作。\n\n#### 主題三：操盤風控與數據服務商模型維度\n\n- **核心概念 / 理論定義**：\n    - **操盤（Trading）**：如同動態定價機制（以「口罩之亂」為例），根據賽情實時動態調整盤口與賠率。\n    - **風控（Risk Control）**：類似銀行信用評估，透過玩家投注行為、設備 ID、IP 等數據進行分析，識別並攔截惡意套利團隊。\n- **關鍵步驟、模型或操作方法**：\n    - **數據服務商開盤模組的六大維度**：\n        1. **氣候條件**：晴天或雨天影響球體飛行距離與比賽發揮。\n        2. **歷史對戰數據**：過去兩隊交手勝負紀錄。\n        3. **近期狀態**：球隊近期的連勝或連敗狀況。\n        4. **即時性（Real-time）**：數據更新速度必須極快，否則即給予套利空間。\n        5. **正確性**：隊名與賽果數據需百分之百精準。\n        6. **賽事規則變革與器材**：如 NBA 大三分時代比分飆高，或 CPBL 中華職棒每年比賽用球彈性係數差異。\n- **講者強調的重要觀念或常見誤區**：\n    - **關鍵營運指標**：Sportsbook 平台的淨利潤率（Margin Rate）行業標準水平約在 **4.0% - 4.5%**。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n1. **COVID-19 賽事停擺與虛擬體育（Virtual Sports）突破**：\n    - **情境/故事**：2020 年底至 2021 年初疫情期間，全球真實體育賽事幾乎全數停擺（僅白俄羅斯與台灣 CPBL 仍在進行），導致博彩平台無賽事可開。\n    - **解法與啟發**：公司研發出「虛擬體育（Virtual Sports / V-Sport）」與快節奏假人賽事（將 90 分鐘比賽縮短為 5 至 20 分鐘快打），並開發「沙巴足球彈珠台」等複合產品。這項創新使公司在疫情期間業績不跌反升，展現出高度的企業韌性。\n2. **南投麒麟潭大數據套利團隊案例**：\n    - **情境/故事**：講者曾與南投麒麟潭的一名套利團隊負責人合作。該團隊掌握日本職棒所有球員自高中甲子園時期起的完整歷史數據，建立專屬機率模型與 Sportsbook 賠率進行比對。\n    - **啟發與結果**：該團隊在棒球賽季中展現出高達 **61%（6成1）** 的勝率，3 到 4 個月內淨贏 220 萬元（20 個單位），最終因勝率過高而被平台關閉帳號。此案例說明大數據深度分析在博彩套利中的威力。\n3. **場邊投注（Court-siding）與假球風波**：\n    - **情境/故事**：利用比賽現場與遠端賠率更新的時間差進行「資訊不對稱」下注（例如天母棒球場現場觀眾在擊球瞬間判斷是否全壘打並即時下注）。此外，台灣 SBL 籃球員在比賽時由觀眾席下注打假球，以及韓國、中國電競賽事的假球事件。\n    - **啟發**：這類非正規下注手段嚴重侵蝕平台利潤，使風控機制與實時數據更新速度成為博彩平台的生死關鍵。\n4. **雜貨店等級小黑網出金刁難親身經歷**：\n    - **情境/故事**：講者自建套利方法後在小型博彩網站投注，贏錢後遭到平台百般刁難，甚至要求講者「自首」才肯退還一半本金。講者隨後向中國公安舉報網進行檢舉。\n    - **啟發**：小型不合規網站（殺豬盤）極具資金風險，而具備品牌公信力與穩定出金能力是正規營運商生存的根本。\n5. **超級 VIP「提款機」與跑車抽獎行銷**：\n    - **情境/故事**：某博彩公司將一台 BMW 320i 跑車作為抽獎獎品，最終贈予一位名為「提款機」的超級 VIP 客戶（該客戶在講者任職期間累計輸額高達 2 億多台幣）。\n    - **啟發**：高端博彩營運極度依賴超級 VIP 客戶，針對頂級客戶提供專屬禮遇、伴遊體驗或豪車抽獎是留存高價值客戶的重要手段。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n|建議實踐項目 / 行動|適用情境或對象|預期成效 / 注意事項|\n|:--|:--|:--|\n|**精準辨識上中下游角色與業務範疇**|新進員工 / 跨部門同仁（如 BI、研發部門）|明確了解自身工作是「幫客戶做」或「平台自做」，掌握價值鏈連接與數據流轉方向。|\n|**嚴格落實風控與套利偵測機制**|風控團隊 / 操盤部門|透過分析玩家投註行為、Device ID、IP 及設備資訊，及時攔截打水軟體與自動化套利客。|\n|**落實對殺豬盤（黑網）客戶的零容忍機制**|商務開發與客戶審查團隊|只要確認合作營運商（Licensee）涉及殺豬盤或灰色詐騙行為，一律立即終止服務，維護公司產品商譽。|\n|**持續優化數據服務商（Data Provider）組合**|產品經理 / 數據採購團隊|針對不同體育項目（如台灣擅長棒球、歐洲擅長足球）採購專精的數據源，並嚴格要求數據即時性與正確性。|\n|**推動產品創新與快節奏產品開發**|產品設計與營運團隊|參考虛擬體育（V-Sport）與沙巴足球彈珠台案例，開發短時長、高頻次（如 5-15 分鐘）的創新玩法。|\n|**參與主管職能與跨領域教育訓練**|管理階層與基層同仁|善用公司提供的教育訓練預算與課程，提升專業知識、心境與視野（_講師未明確指定具體執行 SOP_）。|\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n- **講師推薦之工具與延伸資料**：\n    - **競品/標竿平台**：Pinnacle（蘋果，全球唯一公開歡迎套利客的 Sportsbook 平台）、Bet365（全球大型博彩營運商，數據與速度指標）。\n    - **外聘培訓講師**：火星爺爺（公司曾邀請之知名外師，進行職場職能與通識培訓）。\n- **現場提問與 Q&A 精選（學員痛點與講師解答）**：\n    - **痛點 1：打水套利（Arbitrage）的具體運作原理為何？**\n        - **講師解答**：打水利用不同網站間對同一場賽事的賠率差異進行對沖。例如 A 網站隊伍一賠率 1.05、B 網站隊伍二賠率 1.10，同時在兩邊下注，無論比賽結果如何均可鎖定淨利潤。現今套利團隊皆採用自動化爬蟲軟體全天候偵測賠率漏洞。\n    - **痛點 2：COVID-19 期間無真實賽事，Sportsbook 平台如何生存？**\n        - **講師解答**：透過研發「虛擬體育（Virtual Sports / V-Sport）」與快節奏假人賽事（5-20 分鐘一局），成功的產品創新不僅填補了賽事空白，更使公司在疫情期間業績逆勢成長。\n"}, {"id": "doc-15", "filename": "9.2 Sportsbook介紹 by NFPO Michello.md", "title": "9.2 Sportsbook介紹 by NFPO Michello", "content": "20260922\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n\n- 本培訓旨在幫助新進同仁與跨團隊學員建立對體育博彩（Sportsbook）產業運作、平台架構與業務流程的全面理解。\n- 講者強調 Sportsbook 的核心是將傳統賽事莊家（Bookmaker）拿小冊子登記的模式數位化搬至線上，並以「賠率（Odds）」作為博彩公司最關鍵且最具競爭力的核心產品。\n- 課程系統化地梳理了商業營運模式（信用制與現金制）、多端平台入口、熱門球種以及多元投注玩法（讓分、大小盤、過關串關等）。\n- 培訓亦精確說明了馬來盤等五大盤口的輸贏與派彩（Payout）計算邏輯，協助學員全方位掌握從用戶投注到系統結算（Settle）的完整業務閉環。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### 主題一：Sportsbook 產業概念與產品體系\n\n- **核心概念 / 理論定義**：\n    - **Sportsbook 語源**：起源於傳統賽事中由莊家（Bookie/Bookmaker）拿小冊子（Book）登記注單與賠率，現今指提供玩家投注各類體育比賽與結果的線上平台。\n    - **三大產品分類**：\n        1. **Sports（純體育）**：真實世界進行的體育賽事（如足球、籃球、網球、棒球等）。\n        2. **N-Sports**：由公司或集團自行開發的娛樂型/賭場遊戲（如 Casino、Lucky77、RNG 遊戲）。\n        3. **Third Party（第三方）**：串接經市場驗證具備競爭力與收益潛力的外部供應商產品。\n    - **熱門體育項目**：支援 65 種體育運動，其中**足球**（越南等東南亞主營市場）與**籃球**（菲律賓市場及大客戶最愛）為最主要的營收來源。**板球（Cricket）**則是印度與巴基斯坦市場的特色熱門項目。\n- **關鍵步驟、模型或操作方法（五大平台入口）**：\n    1. **Desktop（桌機）**：完整版版面（含 Left Menu、Odds Page、廣告位等）。\n    2. **Mobile（智慧型手機）**：行動端精簡版視覺介面。\n    3. **WAP（按鍵手機）**：無圖片純文字呈現，僅列出聯賽、主客隊、玩法與賠率等核心資訊。\n    4. **Native App**：以原生外框封裝 Mobile Web 介面。\n    5. **Tele-betting / FB（VIP大戶專線）**：針對信用制大客戶設立的專人電話接單操作平台。\n- **講者強調的重要觀念或常見誤區**：\n    - **賠率即產品**：博彩公司競爭力核心在於賠率，玩家會跨平台比較（如 0.89 vs 0.77），賠率優劣直接影響投注量。\n    - **紅字不代表主隊**：介面上顯示**紅字的隊伍代表「強隊（Favored Team）」**，而非主隊，此為最常見的初學者誤區。\n\n#### 主題二：商業營運模式（Operational Models）\n\n- **核心概念 / 理論定義**：\n    - **Credit Site（信用制 / Member Site）**：由上線（Agent/代理）開通帳號給玩家並核發信用額度。採「**先投注，後結算**」機制，上線依比例抽傭。\n    - **Cash Site（現金制 / Deposit Site / Direct Site）**：玩家自行在網站註冊並預先存款。採「**先存款，後投注**」機制，投注上限即為帳戶存款餘額。\n- **關鍵步驟與營運流程**：\n    - **信用制流程**：代理評估信任度 → 開戶並設定授信額度 → 玩家下注 → 賽事結束結算輸贏與派彩/追款。\n    - **現金制流程**：用戶自主註冊 → 充值存款（Deposit） → 依餘額即時投注 → 賽事結束自動派彩至帳戶。\n- **講者強調的重要觀念或常見誤區**：\n    - 信用制的額度完全取決於上線代理與玩家之間的信任程度，熟客給高額度，新客給低額度。\n\n#### 主題三：核心投注玩法與球頭機制（Bet Types & Lines）\n\n- **核心概念 / 理論定義**：\n    - **Handicap（讓分盤）**：由操盤手（Trader/OP）設定強弱隊讓分分數（球頭），比賽結果扣除讓分後判定輸贏。\n    - **Over/Under（大小盤）**：預測兩隊最終總得分超過（Over）或小於（Under）指定球頭。\n    - **1X2（獨贏盤）**：預測正賽 90 分鐘結果為 1 (主勝)、X (和局)、2 (客勝)。\n    - **Moneyline（勝負盤）**：不含和局選項，必須分出勝負（如籃球正賽及延長賽）。\n    - **Odd/Even（單雙盤）**：預測兩隊總得分加總為單數或雙數。\n    - **Outright（優勝冠軍）**：預測整個賽季、大型盃賽或政治選舉的最終總冠軍，下注時間越早風險越高，賠率相應越高。\n    - **Correct Score（波膽）**：精準預測最終比數，賠率極高，深受東南亞玩家喜愛。\n- **球頭（Handicap Lines）分類與運算**：\n    - **半球（0.5）**：結果必分全贏或全輸。\n    - **整數球（1.0, 2.0）**：若扣除讓分後平手則退注（走水）。\n    - **區間球 / 拆分球頭（如 1.5/2 或 1/1.5）**：系統自動將本金一分為二，分別投注於整數球與半球，可達成降噪防禦，出現「半贏/半輸」狀況。\n- **講者強調的重要觀念或常見誤區**：\n    - **區間球頭換算**：投注頁面上顯示的 `1.5/2` 或 `3/3.5`，在注單上記錄為兩數相加除以 2，分別顯示為 `1.75` 與 `3.25`。\n    - **籃球 vs 足球和局處理**：籃球正賽平手必打加時賽至分出勝負（Moneyline）；足球正賽包含和局（1X2），若進入加時賽或點球大戰，系統會另開獨立賽事（Event）供投注。\n\n#### 主題四：過關串關與系統組合（Mix Parlay & System Parlay）\n\n- **核心概念 / 理論定義**：\n    - **Mix Parlay（混合串關）**：同時選擇多場不同賽事進行組合投注（最少 2 關，最多 20 關），賠率持續相乘獲得高回報。\n    - **System Parlay / SP（系統過關/包牌串關）**：以串關為基礎延伸的包牌產品（如 Lucky、Trixie），自動將所選賽事拆解為多組子組合。\n- **組合架構與邏輯模型**：\n    - **Mix Parlay 原則**：「**全贏才算贏，輸一場即全輸**」。\n    - **System Parlay（SP）原則**：依子組合各自計算輸贏。例如選 A、B、C 三場，SP 會拆成 A×B、B×C、A×C 及 A×B×C 等多張子注單；即便其中一場輸掉，其餘贏的子組合仍可獲得派彩。\n- **講者強調的重要觀念或常見誤區**：\n    - 普通串關只要有一場失敗整單即作廢；而 SP 屬於分散風險的「包牌式」串關，可保留部分中獎組合的派彩收益。\n\n#### 主題五：盤口類型與輸贏派彩計算（Odds Types & Payout Calculation）\n\n- **核心概念 / 理論定義**：\n    - **五大盤口類型**：\n        1. **馬來盤（Malay Odds）**：公司核心基準盤，賠率落在 -1 到 1 之間。\n        2. **香港盤 / 中國盤（HK Odds）**：數值介於 0.01 到 100，均為正數。\n        3. **歐洲盤（Decimal Odds）**：數值介於 1.01 以上，賠率已包含本金。\n        4. **印尼盤（Indo Odds）**：數值 <= -1 或 >= 1。\n        5. **美國盤（US Odds）**：數值 >= 100 或 <= -100 之百位數整數。\n- **馬來盤輸贏與派彩（Payout）計算公式（本金為 Stake）**：\n    - **正數賠率（Odds > 0，如 0.77）**：\n        - 贏：淨贏金 \\(Win = Stake \\times Odds\\)。\n        - 輸：淨輸金 \\(Loss = Stake\\)（賠掉全額本金）。\n    - **負數賠率（Odds < 0，如 -0.87）**：\n        - 概念：代表願意承擔 \\(Stake \\times |Odds|\\) 的風險去贏取全額 \\(Stake\\)。\n        - 贏：淨贏金 \\(Win = Stake\\)。\n        - 輸：淨輸金 \\(Loss = Stake \\times |Odds|\\)（僅虧損風險金額）。\n    - **總派彩金額（Payout）**：\\(Payout = Stake + Win\\)。\n- **講者強調的重要觀念或常見誤區**：\n    - 歐洲盤計算派彩時不需額外加回本金，因為歐洲盤賠率本身已包含 1 本金。\n\n#### 主題六：用戶投注 SOP 與訂單狀態流轉（Betting SOP & Ticket Lifecycle）\n\n- **關鍵步驟與 SOP 流程**：\n    1. **路徑選擇**：選擇體育項目（Sports） → 選擇聯賽（League） → 選擇賽事（Match/Event） → 選擇玩法（Bet Type） → 點擊賠率（Odds/Bet Choice）。\n    2. **注單核對（Bet Slip）**：確認聯賽、主客隊、玩法選項、球頭與賠率。\n    3. **下注執行**：輸入本金（Stake），點擊投注（Bet）。\n    4. **系統回應處理**：\n        - **下注成功**：生成注單。\n        - **下注失敗**：主因包括賠率變動（Odds Change）、賽事關盤（Event Closed/Settled）或比賽結束。\n    5. **狀態追蹤與結算**：進行中注單顯示於 Running Tickets；賽事結束結算後進入 Results Page 與 Settled Tickets，可透過 Result Pop-up 檢視進球順序與具體比分。\n- **講者強調的重要觀念或常見誤區**：\n    - 進行中賽事（Live Event / In-Play）在介面上以**粉紅色背景**呈現，且**永遠置頂於藍色背景的未開打賽事（Deadball / Upcoming）之上**，因為 Live 投注是玩家最活躍且營收佔比最高的來源。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n- **案例一：世足賽黑馬崛起與賠率動態控管**\n    - **具體情境**：世足賽期間賽事頻頻爆冷（如維德角等黑馬隊伍表現優異），大量玩家下注冷門選項。\n    - **背後啟發與解法**：體育賽事具備高度不確定性，操盤團隊必須依據即時賽況與資金流向動態調整賠率，並透過多元玩法（如波膽、讓分）分散單一盤口風險。\n- **案例二：小戴 vs. 小飛 羽球對決實戰情境演練**\n    - **具體情境與題型解析**：\n        1. 小戴實力較強，讓小飛兩分也能贏 → **讓分盤（Handicap）**。\n        2. 預測兩人打完總得分超過 80 分 → **大小盤（Over/Under）**。\n        3. 小戴熬夜追劇可能打平或輸給小飛 → 含和局為 **獨贏盤（1X2）**；無和局則為 **勝負盤（Moneyline）**。\n        4. 預測兩人總比分加總為單數 → **單雙盤（Odd/Even）**。\n        5. 預測小戴最終在亞運奪得金牌 → **優勝冠軍（Outright）**。\n    - **背後啟發與解法**：將日常運動情境直接轉化為博彩產品語言，幫助學員精準對應不同勝負條件下的產品玩法。\n- **案例三：東南亞（越南與菲律賓）在地化市場策略**\n    - **具體情境**：越南玩家極度偏好足球賽事與「波膽（Correct Score）」以小博大玩法；菲律賓市場則有極大部分注單集中於 NBA 與當地 PBA 籃球聯賽。\n    - **背後啟發與解法**：產品與營運佈局需深度在地化，針對不同區域玩家的喜好優化熱門賽事排序與特定高勝率/高分潤玩法。\n- **案例四：區間球頭拆分下注（2:1 比分下注 0.5/1 區間）**\n    - **具體情境**：玩家投注區間球頭，系統自動拆分為整數球與半球進行雙重下注。\n    - **背後啟發與解法**：區間球頭能讓玩家在單一投注中有效降低風險，避免全盤皆輸，並提供半贏半輸的避險選擇。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n|建議實踐項目 / 行動|適用情境或對象|預期成效 / 注意事項|\n|:--|:--|:--|\n|**完成課後線上 QR Code 測驗**|全體參訓學員 / 新進同仁|驗證對 Sportsbook 核心概念、盤口換算與馬來盤輸贏計算的掌握度。|\n|**熟練介面視覺規範（紅字=強隊）**|產品設計 (Product)、營運與客服團隊|避免日常跨部門溝通誤解，防止介面文案或客服說明將強隊誤認為主隊。|\n|**建立下注失敗與賠率變動排查 SOP**|平台營運、技術支援與客服團隊|針對 Odds Change 或 Event Closed 導致的客訴，能快速引導用戶對照注單狀態。|\n|**精確套用馬來盤負賠率派彩邏輯**|風控、結算（Settlement）與財務團隊|確保系統派彩邏輯正確，避免負賠率風險金額與本金算式混淆。|\n|**落在地化熱門賽事置頂配置**|平台內容營運與前端 UI 團隊|依越南（足球/波膽）與菲律賓（籃球）市場差異自動調整首頁熱門賽事排序。|\n|_其他進階產品營運規劃_|_講師未明確指定_|_（訓練簡報未明確列出其餘落地指引）_|\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### 推薦資源與工具\n\n- **簡報教材與隨堂測驗**：訓練簡報檔案，以及課後掃描 QR Code 進行的線上隨堂測驗系統。\n- _（註：講者於培訓中未額外推薦外部書單或延伸參考資料）_。\n\n#### 現場 Q&A 與學員痛點精選\n\n- **Q1：介面上的「紅字隊伍」是指主隊嗎？**\n    - **講師解答**：**不是**。紅字代表的是操盤手評估的**「強隊（Favored Team）」**。主隊與客隊的擺放位置固定為：**主隊在上、客隊在下**。\n- **Q2：為什麼賠率會有負數（如 -0.87）？輸的時候會賠掉多少錢？**\n    - **講師解答**：負數賠率代表「**冒著 \\(|賠率| \\times 本金\\) 的風險去贏取 100% 本金**」。例如本金 $100，賠率 -0.87：贏了可得 $100 淨贏金；輸了僅虧損 \\(100 \\times 0.87 = \\)87，不會輸掉全額 $100。\n- **Q3：混合串關（Mix Parlay）與系統串關（System Parlay / SP）差別在哪裡？**\n    - **講師解答**：Mix Parlay 必須「全贏才算贏，輸一場即全輸」；而 System Parlay（SP）屬於包牌組合（如 Lucky、Trixie），系統會自動拆成多張子注單（A×B、B×C 等），即便其中一場輸掉，其餘贏的子組合依然能正常拿到派彩。\n"}, {"id": "doc-16", "filename": "9.3 Licensee介紹 by TM Bruce.md", "title": "9.3 Licensee介紹 by TM Bruce", "content": "20260923\n\n### 1. 核心結論與關鍵主軸（Executive Summary）\n\n本次培訓由 萬事屋部門負責人 Bruce 主講，旨在建立團隊對 **Licensee（客戶/站點）** 全貌的跨領域認識。核心理念在於沙巴體育（Sabah Sports）採用 **B2B 分潤（Profit-sharing）模式** 營運，客戶為公司營運的「衣食父母」，目前在全球（以越南、中國、印尼等東南亞市場為主）已有約 500 間合作站點，年體育注單達 15 億張（總投注額約 1.4 兆台幣）。最大的收穫是全面剖析了 **三大整合類型（Ina site、API site、賠率數據）** 的適用場景，以及 **子網站架構（Subsidiary）與錢包模式（單一/轉帳錢包）** 的技術與商業邏輯，為後續產品評估與專案協調提供具體依據。\n\n---\n\n### 2. 核心知識點與方法論（Key Takeaways & Frameworks）\n\n#### 主題一：萬事屋部門定位與服務 SOP\n\n- **核心概念 / 理理定義**：部門名稱源自日文動畫《銀魂》中的「萬事屋」，由 TM組成，擔任商務團隊與客戶技術團隊之間的對接視窗，提供「從 0 到 1」建置站點的萬能支援。\n- **關鍵步驟與操作流程（SOP）**：\n    1. **商務接洽**：商務團隊與客戶簽約並確認產品引進。\n    2. **視窗建立**：成立 Telegram、Teams 或其他通訊軟體的技術視窗，邀請客戶技術人員與 PN 進駐。\n    3. **第一線排查與分流**：由有雅團隊協助建立站點。若為技術問題直接指導對接；若為客製化需求或優化建議，評估可行性後提報至「Genome」部門（專案規劃）與開發單位執行。\n    4. **產品反饋**：收集 Bug issue 與改進建議，給予公司反饋以優化產品。\n- **講者強調觀念**：客戶的需求與客製化細節會直接影響下注量與公司營運分潤，團隊需多加協助與關照。\n\n#### 主題二：三大 Licensee 整合類型比較\n\n- **1. 包網**：\n    - **核心概念**：完整打包的網站（類似 MoPC、蝦皮等電商平台），包含會員註冊、登錄、存提款介面，並整合沙巴體育及第三方產品（真人、拉霸、捕魚、彩票）。\n    - **操作與掌控**：控制權全在沙巴團隊，客戶不需開發團隊，僅需配置行銷（Marketing）團隊與 24 小時線上客服（CSD）即可開業。\n    - **適用情境**：適合無技術開發能力、欲節省 IT 維運成本或針對特定市場的客戶（如印尼市場）。\n- **2. API site**：\n    - **核心概念**：沙巴體育僅提供體育賽事與投注頁面（以 Iframe 方式），鑲嵌在客戶既有的博弈網站中。\n    - **操作與客製化**：客戶透過 API 處理會員創建、登錄、轉帳與拉單；介面配色（CSS Color）可配合客戶外框風格客製化微調。\n    - **適用情境**：**前提為客戶必須有自主技術能力且已有運營中的博弈網站**。此模式為目前最多客戶選擇（約 300 多間，年增約百間）。\n- **3. 賠率數據（Odds Data ）**：\n    - **核心概念**：概念如同「樂高積木」，無任何前台 UI 畫面，僅從 DB 導出賽事、賠率、賽果及直播視頻等原始數據。\n    - **操作機制**：客戶自行設計前台介面，透過 API 獲取數據。**前提是玩家下注注單必須透過 API 送回沙巴進行結算**，以保障沙巴的分潤獲利。\n    - **講者強調常見誤區**：**【誤區】認為不含頁面的數據產品比較便宜**。講者澄清賠率數據包含公司核心操盤手（Trader）的精算與研發成本，是產品精華，費用不會比較便宜，且對客戶篩選極為嚴格。\n\n#### 主題三：特殊架構與營運機制\n\n- **子網站（Subsidiary / 直銷模式）**：\n    - **核心概念**：類似直銷（如安麗），總代理（Licensee）向沙巴引進產品後，下設多個子網站（re-seller/總代理），迅速擴張市場。\n    - **權限與開發規範**：後台採 3 層權限控制（沙巴 \\(\\rightarrow\\) 總代理 \\(\\rightarrow\\) 子網站 \\(\\rightarrow\\) 玩家），各子網站間資料隔離。**所有產品開發時必須支援子網站獨立開關**，否則單一子網站要求停用時，會被迫導致整體總代理下線，嚴重影響營運。\n    - **風控與商業邏輯**：子網站降低取得沙巴品牌的門檻，而沙巴將風控對象鎖定在總代理，由總代理負擔下線管理責任。\n- **錢包模式（Wallet Models）**：\n    - **轉帳錢包（Transfer Wallet）**：概念如「星巴克隨行卡」，需手動將資金從主錢包轉入/轉出體育錢包。優點是技術串接門檻低（僅需轉入/轉出 API）；缺點是玩家頻繁操作較不便。\n    - **單一錢包（Single Wallet）**：概念如「現金」，全站通用單一餘額。優點是玩家體驗順暢；缺點是技術複雜度與風險高，頻繁呼叫 API 若有瑕疵易導致錯帳。\n    - **說明**：Ina site 無需錢包 API，錢包管理僅適用於 API site 與賠率數據客戶。\n\n---\n\n### 3. 實例案例與情境演練（Case Studies & Examples）\n\n1. **API site 跨平台整合與配色案例**：\n    - **具體實例**：m88 採暗色系，頁面中除沙巴體育外，同時整合其他競品；FUN88則依藍白配色微調沙巴介面。\n    - **啟發**：API site 提供高自由度，允許客戶同時串接多方體育產品，透過 CSS 參數微調可消除視覺割裂感。\n2. **賠率數據的跨界引流應用（Widget 模式）**：\n    - **具體實例**：客戶將賠率數據組裝成首頁的小工具（Widget），讓原本玩拉霸或 Casino 的玩家在看到世足賽或英超資訊時，順手下注支持球隊。\n    - **啟發**：打破傳統體育頁面限制，成功將非體育玩家引流至體育投注，增加總出單量。\n3. **現場學員演練（商業選擇決策）**：\n    - **實戰情境**：學員分組討論創立體育平台應選何種模式。第一組選 包網（著重行銷與客服，技術外包給沙巴）；第二組選 API site（兼顧自主性與開發成本）。\n    - **講師點評**：選擇無絕對好壞，取決於商業營運模式；開站與服務費用並非固定排價，而是由商務（BD）根據合作關係與交易量彈性洽談。\n\n---\n\n### 4. 實踐與落地行動（Actionable Steps）\n\n| 建議實踐項目 / 行動              | 適用情境或對象         | 預期成效 / 注意事項                                                       |\n| :----------------------- | :-------------- | :---------------------------------------------------------------- |\n| **產品開發支援子網站獨立開關**        | 所有新舊產品開發與 PM 評估 | **預期成效**：確保個別子網站可彈性開關產品，避免影響整體總代理營運與注量收益。                         |\n| **建立第一線技術對接與分流 SOP**     | 萬事屋/ TM 團隊      | **預期成效**：透過 Telegram/Teams 視窗提供 0 到 1 建置支援，並將客製需求及時分流至「Genome」部門。 |\n| **API site 介面配色與多供應商支援** | 前端開發與 UI 團隊     | **預期成效**：提供 CSS 參數調修，降低客戶嵌入時的視覺割裂感。                               |\n| **單一錢包 API 風控與校驗強化**     | 串接單一錢包之技術團隊     | **注意事項**：加強餘額同步與下注 API 嚴謹度，防止出現錯帳或金額多零少零之風險。                      |\n| **開站費與分潤率洽談**            | 商務（BD）團隊        | **注意事項**：講師未明確指定固定收費標準（說明費用由商務依據量與關係彈性洽談）。                        |\n\n---\n\n### 5. 推薦資源與 Q&A 互動精選（Resources & Discussion）\n\n#### 推薦資源\n\n- **工具與平台**：\n    - 沙巴前台（Desktop、Mobile H5 網 頁 版）。\n    - 沙巴後台（提供大數據統計、玩家下注清單、風控狀態與報表分析）。\n    - 技術對接工具：Telegram、Teams。\n- **推薦書單 / 延伸資料**：\n    - **【講師未明確指定】**（講者於課堂中未推薦具體書單，僅以動畫《銀魂》說明萬事屋概念，及以「安麗」說明直銷架構）。\n\n#### Q&A 互動精選\n\n1. **Q：三種整合模式中，費用是否有固定的高低順序？賠率數據比較便宜？**\n    - **講師解答**：費用由商務洽談，沒有絕對標準。賠率數據包含核心操盤手（Trader）的精算與研發人力，是產品精華，**費用不會比較便宜**，且客戶篩選極為嚴格。\n2. **Q：後台的子網站（Subsidiary）層級可以無限向下延伸開立嗎？**\n    - **講師解答**：目前後台架構劃分為 3 層（沙巴 \\(\\rightarrow\\) 總代理 \\(\\rightarrow\\) 子網站）。\n3. **Q：若總代理放任下轄子網站進行詐騙或不合規運營，沙巴如何處置？**\n    - **講師解答**：沙巴直接對總代理負責。若總代理未盡管理責任，沙巴會透過商務團隊進行溝通，必要時停用服務或訴諸法律程序。\n"}]
+  </script>
+
+  <script>
+    // Embedded Light Markdown Parser (Zero external dependency)
+    function parseMarkdown(md) {
+      if (!md) return '';
+      let text = md.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      // Handle Code blocks first
+      const codeBlocks = [];
+      text = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        const id = '___CODE_BLOCK_' + codeBlocks.length + '___';
+        codeBlocks.push('<pre><code class="language-' + escapeHtml(lang) + '">' + escapeHtml(code) + '</code></pre>');
+        return id;
+      });
+
+      // Split lines to handle block elements
+      const lines = text.split('\n');
+      const output = [];
+      let inTable = false;
+      let tableRows = [];
+      let inList = false;
+      let listType = ''; // 'ul' or 'ol'
+      let inBlockquote = false;
+      let bqLines = [];
+
+      function flushTable() {
+        if (!inTable) return;
+        if (tableRows.length > 0) {
+          let html = '<table>';
+          let hasHeader = false;
+          if (tableRows.length >= 2 && /^\s*\|?\s*[:\-]+\s*\|/.test(tableRows[1])) {
+            hasHeader = true;
+          }
+
+          tableRows.forEach((r, rIdx) => {
+            if (hasHeader && rIdx === 1) return;
+            const cells = r.split('|').map(c => c.trim()).filter((c, i, arr) => {
+              if ((i === 0 || i === arr.length - 1) && c === '') return false;
+              return true;
+            });
+            
+            const tag = (hasHeader && rIdx === 0) ? 'th' : 'td';
+            if (hasHeader && rIdx === 0) html += '<thead>';
+            else if (hasHeader && rIdx === 2) html += '<tbody>';
+            
+            html += '<tr>';
+            cells.forEach(cell => {
+              html += '<' + tag + '>' + parseInline(cell) + '</' + tag + '>';
+            });
+            html += '</tr>';
+            
+            if (hasHeader && rIdx === 0) html += '</thead>';
+          });
+          if (hasHeader && tableRows.length > 2) html += '</tbody>';
+          html += '</table>';
+          output.push(html);
+        }
+        tableRows = [];
+        inTable = false;
+      }
+
+      function flushList() {
+        if (!inList) return;
+        output.push('</' + listType + '>');
+        inList = false;
+        listType = '';
+      }
+
+      function flushBlockquote() {
+        if (!inBlockquote) return;
+        const bqContent = bqLines.map(l => parseInline(l)).join('<br>');
+        output.push('<blockquote>' + bqContent + '</blockquote>');
+        bqLines = [];
+        inBlockquote = false;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // Table check
+        if (line.trim().startsWith('|') || (line.includes('|') && line.trim().endsWith('|'))) {
+          flushList();
+          flushBlockquote();
+          inTable = true;
+          tableRows.push(line.trim());
+          continue;
+        } else {
+          flushTable();
+        }
+
+        // Horizontal rule
+        if (/^\s*([*\-_]){3,}\s*$/.test(line)) {
+          flushList();
+          flushBlockquote();
+          output.push('<hr>');
+          continue;
+        }
+
+        // Blockquote
+        if (/^\s*>\s*(.*)/.test(line)) {
+          flushList();
+          inBlockquote = true;
+          const content = line.replace(/^\s*>\s*/, '');
+          bqLines.push(content);
+          continue;
+        } else {
+          flushBlockquote();
+        }
+
+        // Headers
+        const headerMatch = line.match(/^(#{1,6})\s+(.*)/);
+        if (headerMatch) {
+          flushList();
+          const level = headerMatch[1].length;
+          const titleText = headerMatch[2].trim();
+          const slug = 'heading-' + encodeURIComponent(titleText.toLowerCase().replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]+/g, '-'));
+          output.push('<h' + level + ' id="' + slug + '">' + parseInline(titleText) + '</h' + level + '>');
+          continue;
+        }
+
+        // Lists
+        const ulMatch = line.match(/^(\s*)[*\-]\s+(.*)/);
+        const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
+
+        if (ulMatch || olMatch) {
+          const isUl = !!ulMatch;
+          const currentType = isUl ? 'ul' : 'ol';
+          const itemText = isUl ? ulMatch[2] : olMatch[3];
+
+          if (!inList || listType !== currentType) {
+            flushList();
+            inList = true;
+            listType = currentType;
+            output.push('<' + listType + '>');
+          }
+
+          let taskItem = itemText;
+          if (/^\[ \]\s+(.*)/.test(itemText)) {
+            taskItem = '<input type="checkbox" disabled> ' + itemText.substring(4);
+          } else if (/^\[[xX]\]\s+(.*)/.test(itemText)) {
+            taskItem = '<input type="checkbox" checked disabled> ' + itemText.substring(4);
+          }
+
+          output.push('<li>' + parseInline(taskItem) + '</li>');
+          continue;
+        } else {
+          flushList();
+        }
+
+        // Blank line
+        if (!line.trim()) {
+          continue;
+        }
+
+        // Paragraph
+        output.push('<p>' + parseInline(line) + '</p>');
+      }
+
+      flushTable();
+      flushList();
+      flushBlockquote();
+
+      let resultHtml = output.join('\n');
+
+      // Restore Code blocks
+      codeBlocks.forEach((block, idx) => {
+        resultHtml = resultHtml.replace('___CODE_BLOCK_' + idx + '___', block);
+      });
+
+      return resultHtml;
+    }
+
+    function parseInline(text) {
+      if (!text) return '';
+      let str = text;
+
+      // Inline code
+      str = str.replace(/`([^`]+)`/g, function(match, code) {
+        return '<code>' + code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>';
+      });
+
+      // Images
+      str = str.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%; border-radius:6px;">');
+
+      // Links
+      str = str.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      // Auto link naked URLs
+      str = str.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+
+      // Bold & Italic
+      str = str.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+
+      // Bold
+      str = str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // Italic
+      str = str.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+      // Strikethrough
+      str = str.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+      return str;
+    }
+
+    // Application Logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const docsDataEl = document.getElementById('docs-data');
+      const docs = JSON.parse(docsDataEl.textContent.trim());
+      
+      const fileListEl = document.getElementById('file-list');
+      const searchInput = document.getElementById('search-input');
+      const viewer = document.getElementById('markdown-viewer');
+      const viewTitle = document.getElementById('view-title');
+      const btnOpenRaw = document.getElementById('btn-open-raw');
+      const btnDownloadRaw = document.getElementById('btn-download-raw');
+      const contentScroll = document.getElementById('content-scroll');
+
+      let currentDocId = null;
+
+      function renderSidebar(filterText = '') {
+        fileListEl.innerHTML = '';
+        const lower = filterText.toLowerCase().trim();
+        
+        const filtered = docs.filter(d => {
+          return d.filename.toLowerCase().includes(lower) || 
+                 d.content.toLowerCase().includes(lower);
+        });
+
+        if (filtered.length === 0) {
+          fileListEl.innerHTML = '<li style="padding:16px; color:#64748b; font-size:0.85rem; text-align:center;">無符合的文件</li>';
+          return;
+        }
+
+        filtered.forEach(d => {
+          const li = document.createElement('li');
+          li.className = 'file-item' + (d.id === currentDocId ? ' active' : '');
+          li.dataset.id = d.id;
+
+          const titleDiv = document.createElement('div');
+          titleDiv.className = 'file-title';
+          titleDiv.textContent = d.title;
+
+          li.appendChild(titleDiv);
+
+          li.addEventListener('click', () => {
+            selectDoc(d.id);
+          });
+
+          fileListEl.appendChild(li);
+        });
+      }
+
+      function selectDoc(docId) {
+        const doc = docs.find(d => d.id === docId);
+        if (!doc) return;
+
+        currentDocId = docId;
+
+        // Update active class in sidebar
+        document.querySelectorAll('.file-item').forEach(el => {
+          el.classList.toggle('active', el.dataset.id === docId);
+        });
+
+        // Update header & buttons
+        viewTitle.textContent = doc.title;
+        btnOpenRaw.href = encodeURI(doc.filename);
+        btnDownloadRaw.href = encodeURI(doc.filename);
+        btnDownloadRaw.setAttribute('download', doc.filename);
+
+        // Render markdown
+        viewer.innerHTML = parseMarkdown(doc.content);
+
+        // Scroll content to top
+        contentScroll.scrollTop = 0;
+
+        // Update URL hash
+        history.replaceState(null, null, '#' + doc.id);
+      }
+
+      // Search input listener
+      searchInput.addEventListener('input', (e) => {
+        renderSidebar(e.target.value);
+      });
+
+      // Initial route selection from Hash
+      function initRoute() {
+        renderSidebar();
+        let targetId = docs[0] ? docs[0].id : null;
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+          const parts = hash.split('/');
+          const found = docs.find(d => d.id === parts[0]);
+          if (found) {
+            targetId = found.id;
+          }
+        }
+        if (targetId) {
+          selectDoc(targetId);
+        }
+      }
+
+      initRoute();
+    });
+  </script>
+</body>
+</html>
